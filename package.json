@@ -1,11 +1,16 @@
 {
   "name": "hardhat-project",
+  "scripts": {
+    "start": "hardhat node",
+    "deploy:localhost": "hardhat run scripts/deploy.ts --network localhost",
+    "test": "hardhat test"
+  },
   "devDependencies": {
-    "@nomicfoundation/hardhat-toolbox": "^1.0.2",
-    "hardhat": "^2.11.2"
+    "@nomicfoundation/hardhat-toolbox": "1.0.2",
+    "hardhat": "2.11.2"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^4.7.3",
-    "dotenv": "^16.0.2"
+    "@openzeppelin/contracts": "4.7.3",
+    "dotenv": "16.0.2"
   }
 }
