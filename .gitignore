@@ -9,3 +9,5 @@ typechain-types
 cache
 artifacts
 
+data/.DS_Store
+.DS_Store

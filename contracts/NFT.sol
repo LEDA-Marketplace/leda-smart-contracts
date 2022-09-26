@@ -8,6 +8,8 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract NFT is ERC721URIStorage, Ownable {
     using Counters for Counters.Counter;
 
+    mapping(uint => string) public onChainData;
+
     event LogNFTMinted(
         uint _nftId,
         address _owner,
@@ -18,12 +20,17 @@ contract NFT is ERC721URIStorage, Ownable {
 
     constructor() ERC721("NFT LEDA Collection", "LEDA"){}
 
-    function mint(string memory _tokenURI) external returns(uint) {
+    function mint(string memory _tokenURI, string memory attributes) external returns(uint) {
         tokenCount.increment();
         _safeMint(msg.sender, tokenCount.current());
         _setTokenURI(tokenCount.current(), _tokenURI);
+        onChainData[tokenCount.current()] = attributes;
         emit LogNFTMinted(tokenCount.current(), msg.sender, _tokenURI);
         
         return(tokenCount.current());
+    }
+
+    function getAttributes(uint _nftId) external view returns (string memory) {
+        return onChainData[_nftId];
     }
 }
