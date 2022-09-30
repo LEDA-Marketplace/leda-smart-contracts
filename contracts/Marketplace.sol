@@ -73,6 +73,7 @@ contract Marketplace is Ownable, ReentrancyGuard {
         uint itemId = itemsCount.current();
         // transfer nft
         _nft.transferFrom(msg.sender, address(this), _tokenId);
+
         // add new item to items mapping
         items[itemId] = Item(
             itemId, 

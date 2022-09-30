@@ -8,7 +8,13 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract NFT is ERC721URIStorage, Ownable {
     using Counters for Counters.Counter;
 
+    struct CreatorInfo {
+        address creator;
+        uint royalties;
+    }
     mapping(uint => string) public onChainData;
+
+    mapping(uint => CreatorInfo) public creatorInfo;
 
     event LogNFTMinted(
         uint _nftId,
@@ -20,10 +26,14 @@ contract NFT is ERC721URIStorage, Ownable {
 
     constructor() ERC721("NFT LEDA Collection", "LEDA"){}
 
-    function mint(string memory _tokenURI, string memory attributes) external returns(uint) {
+    function mint(string memory _tokenURI, string memory attributes, uint _creatorRoyalties) external returns(uint) {
         tokenCount.increment();
         _safeMint(msg.sender, tokenCount.current());
         _setTokenURI(tokenCount.current(), _tokenURI);
+
+        creatorInfo[tokenCount.current()].creator = msg.sender;
+        creatorInfo[tokenCount.current()].royalties = _creatorRoyalties;
+
         onChainData[tokenCount.current()] = attributes;
         emit LogNFTMinted(tokenCount.current(), msg.sender, _tokenURI);
         
