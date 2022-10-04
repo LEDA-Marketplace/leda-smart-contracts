@@ -16,14 +16,14 @@ async function main() {
   // deploy contracts
   const marketplace = await Marketplace.deploy(1);
   const apesNft = await ApesNFT.deploy("Jupe Apes", "APES", 3);
-  const ledaNft = await LedaNFT.deploy("Jupe Apes", "APES");
+  const ledaNft = await LedaNFT.deploy("Leda NFT", "LEDA");
 
   console.log(marketplace.address, " Marketplace contract address");
-  console.log(apesNft.address, " NFTs contract address");
+  console.log(apesNft.address, " Apes NFTs contract address");
   console.log(ledaNft.address, " Leda NFTs contract address");
   // Save copies of each contracts abi and address to the frontend.
   saveFrontendFiles(marketplace , "Marketplace");
-  saveFrontendFiles(apesNft , "LedaNFT");
+  saveFrontendFiles(ledaNft , "LedaNFT");
   saveFrontendFiles(apesNft , "ApesNFT");
 }
 
