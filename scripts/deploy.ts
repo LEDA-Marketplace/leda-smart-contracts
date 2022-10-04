@@ -10,17 +10,21 @@ async function main() {
 
   
   // Get the ContractFactories and Signers here.
-  const NFT = await ethers.getContractFactory("NFT");
+  const ApesNFT = await ethers.getContractFactory("ApesNFT");
+  const LedaNFT = await ethers.getContractFactory("LedaNFT");
   const Marketplace = await ethers.getContractFactory("Marketplace");
   // deploy contracts
   const marketplace = await Marketplace.deploy(1);
-  const nft = await NFT.deploy();
+  const apesNft = await ApesNFT.deploy("Jupe Apes", "APES", 3);
+  const ledaNft = await LedaNFT.deploy("Jupe Apes", "APES");
 
   console.log(marketplace.address, " Marketplace contract address");
-  console.log(nft.address, " NFTs contract address");
+  console.log(apesNft.address, " NFTs contract address");
+  console.log(ledaNft.address, " Leda NFTs contract address");
   // Save copies of each contracts abi and address to the frontend.
   saveFrontendFiles(marketplace , "Marketplace");
-  saveFrontendFiles(nft , "NFT");
+  saveFrontendFiles(apesNft , "LedaNFT");
+  saveFrontendFiles(apesNft , "ApesNFT");
 }
 
 function saveFrontendFiles(contract:any, name:string) {
