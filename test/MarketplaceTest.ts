@@ -11,15 +11,18 @@ const fromWei = (num:number) => ethers.utils.formatEther(num)
 async function marketplaceFixture() {
         const [owner, minterOne, minterTwo, buyer, seller, buyerTwo] = await ethers.getSigners();
         
-        const NFT = await ethers.getContractFactory("NFT");
-        const nft = await NFT.deploy();
+        const LedaNFT = await ethers.getContractFactory("LedaNFT");
+        const ledaNft = await LedaNFT.deploy("Leda NFTs", "Leda");
 
-        await nft.deployed();
+        const ApesNFT = await ethers.getContractFactory("ApesNFT");
+        const apesNft = await ApesNFT.deploy("Leda NFTs", "Leda", 5);
+
+        await ledaNft.deployed();
+        await apesNft.deployed();
         
         const Marketplace = await ethers.getContractFactory("Marketplace");
         const marketplace = await Marketplace.deploy(0);
 
-        await nft.deployed();
         await marketplace.deployed();
 
         await marketplace.setFeePercent(feePercent);

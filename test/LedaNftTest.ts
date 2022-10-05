@@ -11,37 +11,32 @@ const fromWei = (num:number) => ethers.utils.formatEther(num)
 async function marketplaceFixture() {
         const [owner, minterOne, minterTwo, buyer, seller, buyerTwo] = await ethers.getSigners();
         
-        const ApesNFT = await ethers.getContractFactory("ApesNFT");
-        const apesNft = await ApesNFT.deploy("Jupe Apes NFTs", "APES", 3);
+        const LedaNFT = await ethers.getContractFactory("LedaNFT");
+        const ledaNft = await LedaNFT.deploy("Leda NFTs", "Leda");
 
-        await apesNft.deployed();
+        await ledaNft.deployed();
         
-        return { apesNft, owner, minterOne, minterTwo, buyer, seller, buyerTwo}
+        return { ledaNft, owner, minterOne, minterTwo, buyer, seller, buyerTwo}
 }
 
-
-
 describe("Marketplace Contract Testing", () => { 
-    describe("Minting NFTs", function () {
-        it("should be able to mint an Ape NFT", async () => {
-            const {apesNft, owner, minterOne, minterTwo, buyer, seller, buyerTwo} = await loadFixture(marketplaceFixture);
+    describe("Minting Leda NFTs", function () {
+        it("should be able to mint a Leda NFT", async () => {
+            const {ledaNft, owner, minterOne, minterTwo, buyer, seller, buyerTwo} = await loadFixture(marketplaceFixture);
  
-            const tx1 = await apesNft.connect(owner).mint(URI, [[1,1],[2,0]]);
-            const tx2 = await apesNft.connect(owner).mint(URI, [[2,1],[3,1],[4,1]]);
+            const tx1 = await ledaNft.connect(owner).mint(URI, 3);
+            const tx2 = await ledaNft.connect(owner).mint(URI, 5);
             const receipt = await tx2.wait();
             const [events] = receipt.events;
-            /* 
+            /*
                 console.log("id:", events.args);
                 console.log("id:", events.args.tokenId);
             */
-            expect(await apesNft.balanceOf(owner.address)).to.equal(2);
-            expect(await apesNft.getCurrentTokenId()).to.equal(2);
-            expect(await apesNft.ownerOf(1)).to.equal(owner.address);
-            expect(await apesNft.tokenURI(1)).to.equal(URI);
+            expect(await ledaNft.balanceOf(owner.address)).to.equal(2);
+            expect(await ledaNft.totalSupply()).to.equal(2);
+            expect(await ledaNft.ownerOf(1)).to.equal(owner.address);
+            expect(await ledaNft.tokenURI(1)).to.equal(URI);
 
-            const attributes = await apesNft.getApeAttributes(1);
-
-            //console.log("Attributes: ", attributes);
         });
 
         /*it("should track each minted NFT", async () => {
