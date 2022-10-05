@@ -210,7 +210,7 @@ contract Marketplace is Ownable, ReentrancyGuard {
 
     function getRoyalties(uint _itemId, uint _creatorRoyaltiesPercent) 
         view 
-        public 
+        private 
         returns(uint _platformFees, uint _sellerAmount, uint _creatorAmount)
     {
         uint _price = items[_itemId].price;
