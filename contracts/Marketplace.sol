@@ -90,6 +90,7 @@ contract Marketplace is Ownable, ReentrancyGuard {
         external
         nonReentrant
         payable
+        returns(uint)
     {
         require(_price > 0, "Price must be greater than zero!");
         uint listingFeesAmount = getListingFees(_price);
@@ -123,6 +124,7 @@ contract Marketplace is Ownable, ReentrancyGuard {
             msg.sender,
             _creator
         );
+        return itemsCount.current();
     }
 
     function changeItemStatus(uint _itemId, item_status _newStatus)

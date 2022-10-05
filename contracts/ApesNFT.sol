@@ -28,7 +28,7 @@ contract ApesNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Ownabl
         address _owner,
         string _nftURI
     );
-    
+
     modifier onlyValidRoyalty(uint _royaltyPercentage) {
         require(_royaltyPercentage <= MAX_ROYALTIES_PERCENTAGE, "Royalties percentage should be equal or lesss than 10%");
         _;
@@ -41,7 +41,7 @@ contract ApesNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Ownabl
         royaltyPercentage = _royaltyPercentage;
     }
 
-    function setRoyaltyPercentage(uint _royaltyPercentage) 
+    function setRoyaltyPercentage(uint _royaltyPercentage)
         external 
         onlyOwner
         onlyValidRoyalty(_royaltyPercentage)
