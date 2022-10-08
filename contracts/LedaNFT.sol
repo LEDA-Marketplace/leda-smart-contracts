@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 
 contract LedaNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Ownable {
     using Counters for Counters.Counter;
-    Counters.Counter private tokenCount;
+    Counters.Counter public tokenCount;
 
     uint public maxCreatorRoyalties;
 
@@ -30,7 +30,8 @@ contract LedaNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Ownabl
 
     constructor(string memory _name, string memory _symbol) ERC721(_name, _symbol)
     {
-        maxCreatorRoyalties = 10;
+        // This means that the maximun amount is 10%
+        maxCreatorRoyalties = 100;
     }
 
     function setMaxCreatorRoyalties(uint _maxCreatorRoyalties)
@@ -48,7 +49,10 @@ contract LedaNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Ownabl
         _unpause();
     }
 
-    function mint(string memory _tokenURI, uint _royaltiesPercentage) 
+    // Royalties should be received as an integer number
+    // i.e., if royalties are 2.5% this contract should receive 25
+    function mint(string memory _tokenURI, uint _royaltiesPercentage)
+        whenNotPaused
         external 
         returns(uint) 
     {
@@ -99,5 +103,14 @@ contract LedaNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Ownabl
         returns (bool)
     {
         return super.supportsInterface(interfaceId);
+    }
+
+    event LogGetCreator(uint _idNFT, address _owner, uint royalties);
+
+    function getCreatorAndRoyalties(uint idNFT) external returns (address, uint) {
+
+        emit LogGetCreator(idNFT, creatorInfo[idNFT].creator, creatorInfo[idNFT].royalties);
+
+        return (creatorInfo[idNFT].creator, creatorInfo[idNFT].royalties);
     }
 }

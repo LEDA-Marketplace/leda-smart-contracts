@@ -61,7 +61,8 @@ contract ApesNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Ownabl
             string memory _tokenURI, 
             Attributes[] memory _attributes
         )
-        external 
+        external
+        whenNotPaused
         onlyOwner
         returns(uint) 
     {
@@ -128,5 +129,11 @@ contract ApesNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Ownabl
         returns (bool)
     {
         return super.supportsInterface(interfaceId);
+    }
+    event LogGetCreator(uint _idNFT, address _owner);
+
+    function getCreator(uint idNFT) external returns (address) {
+        emit LogGetCreator(idNFT, owner());
+        return owner();
     }
 }

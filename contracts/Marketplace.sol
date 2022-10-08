@@ -4,15 +4,23 @@ pragma solidity ^0.8.16;
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "hardhat/console.sol";
 
-contract Marketplace is Ownable, ReentrancyGuard {
+interface IGetCreatorAndRoyalties{
+    function getCreatorAndRoyalties(uint idNFT) external returns (address, uint);
+}
+
+contract Marketplace is Ownable, ReentrancyGuard, Pausable {
     using Counters for Counters.Counter;
     uint public feePercent; // the fee percentage on sales
     uint public listingFeePercent;
     Counters.Counter public itemsCount;
     Counters.Counter public itemsSold;
+    // Royalties should be received as an integer number
+    // i.e., if royalties are 2.5% this contract should receive 25
+    uint constant toPercentage = 1000;
 
     enum item_status
     {
@@ -82,17 +90,26 @@ contract Marketplace is Ownable, ReentrancyGuard {
         view
         returns(uint)
     {
-        return (_price * listingFeePercent)/1000;
+        return (_price * listingFeePercent)/toPercentage;
+    }
+
+    function pause() public onlyOwner {
+        _pause();
+    }
+
+    function unpause() public onlyOwner {
+        _unpause();
     }
 
     // Make item to offer on the marketplace
-    function makeItem(address _nft, uint _tokenId, uint _price, address _creator, uint _creatorRoyaltiesPercent)
+    function makeItem(address _nft, uint _tokenId, uint _price)
         external
+        whenNotPaused
         nonReentrant
         payable
         returns(uint)
     {
-        require(_price > 0, "Price must be greater than zero!");
+        //require(_price > 0, "Price must be greater than zero!");
         uint listingFeesAmount = getListingFees(_price);
         require(listingFeesAmount <= msg.value, "Should pay listing fees!");
         // increment itemCount
@@ -103,6 +120,8 @@ contract Marketplace is Ownable, ReentrancyGuard {
 
         if(listingFeesAmount > 0)
             payable(address(this)).transfer(listingFeesAmount);
+
+        (address _creator, uint _creatorRoyaltiesPercent) = IGetCreatorAndRoyalties(_nft).getCreatorAndRoyalties(_tokenId);
 
         // add new item to items mapping
         items[itemId] = Item(
@@ -157,22 +176,22 @@ contract Marketplace is Ownable, ReentrancyGuard {
    
     function buyItem(uint _itemId) 
         external 
-        payable 
+        payable
+        whenNotPaused
         nonReentrant 
     {
         Item storage item = items[_itemId];
         require(_itemId > 0 && _itemId <= itemsCount.current(), "item does not exist");
         require(msg.value >= item.price, "not enough ether to cover item price and market fee");
-        require(item.status != item_status.Sold, "item already sold");
         require(item.status == item_status.Listed, "item should be listed");
 
-        (uint platformFees, uint sellerAmount, uint creatorAmount) 
+        (uint sellerAmount, uint creatorAmount) 
             = getRoyalties(_itemId, item.creatorRoyaltiesPercent);
-
+        console.log(sellerAmount);
+        console.log(creatorAmount);
         // pay seller and feeAccount
-        item.creator.transfer(creatorAmount);
-        item.seller.transfer(sellerAmount);
-        payable(address(this)).transfer(platformFees);
+        (item.creator).transfer(creatorAmount);
+        (item.seller).transfer(sellerAmount);
         
         // update item to sold
         item.status =  item_status.Sold;
@@ -211,12 +230,13 @@ contract Marketplace is Ownable, ReentrancyGuard {
     function getRoyalties(uint _itemId, uint _creatorRoyaltiesPercent) 
         view 
         private 
-        returns(uint _platformFees, uint _sellerAmount, uint _creatorAmount)
+        returns(uint _sellerAmount, uint _creatorAmount)
     {
+        uint _platformFees;
         uint _price = items[_itemId].price;
         
-        _creatorAmount = (_price * _creatorRoyaltiesPercent)/1000; 
-        _platformFees = (_price * feePercent)/1000;
+        _creatorAmount = (_price * _creatorRoyaltiesPercent)/toPercentage; 
+        _platformFees = (_price * feePercent)/toPercentage;
         _sellerAmount = _price - _platformFees - _creatorAmount;
     }
 }

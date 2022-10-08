@@ -4,7 +4,8 @@ import { Contract, BigNumber, utils} from "ethers";
 const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers");
 
 const URI:string = "sample URI";
-const feePercent = 1;
+const marketplaceFeePercent = 30;
+const creatorFeePercent = 25;
 const toWei = (num:number) => ethers.utils.parseEther(num.toString())
 const fromWei = (num:number) => ethers.utils.formatEther(num)
 
@@ -12,10 +13,10 @@ async function marketplaceFixture() {
         const [owner, minterOne, minterTwo, buyer, seller, buyerTwo] = await ethers.getSigners();
         
         const LedaNFT = await ethers.getContractFactory("LedaNFT");
-        const ledaNft = await LedaNFT.deploy("Leda NFTs", "Leda");
+        const ledaNft = await LedaNFT.deploy("LEDA NFT Collection", "LEDA");
 
         const ApesNFT = await ethers.getContractFactory("ApesNFT");
-        const apesNft = await ApesNFT.deploy("Leda NFTs", "Leda", 5);
+        const apesNft = await ApesNFT.deploy("Apes NFTs", "Apes", 5);
 
         await ledaNft.deployed();
         await apesNft.deployed();
@@ -24,60 +25,63 @@ async function marketplaceFixture() {
         const marketplace = await Marketplace.deploy(0);
 
         await marketplace.deployed();
+        await marketplace.setFeePercent(marketplaceFeePercent);
 
-        await marketplace.setFeePercent(feePercent);
-
-        return { nft, marketplace, owner, minterOne, minterTwo, buyer, seller, buyerTwo}
+        return {ledaNft, apesNft, marketplace, owner, minterOne, minterTwo, buyer, seller, buyerTwo}
 }
 
 async function mintNFTs() {
-    const {nft, marketplace, owner, minterOne, minterTwo, buyer, seller, buyerTwo} = await loadFixture(marketplaceFixture);
+    const {ledaNft, marketplace, owner, minterOne, minterTwo, buyer, seller, buyerTwo} = await loadFixture(marketplaceFixture);
 
     //Mint and NFT
-    await nft.connect(minterOne).mint(URI)
-    //Minter approves marketplace to spend nft
+    await ledaNft.connect(minterOne).mint(URI, creatorFeePercent)
+    //Minter approves marketplace to spend ledaNft
     
-    await nft.connect(minterOne).setApprovalForAll(marketplace.address, true);
+    await ledaNft.connect(minterOne).setApprovalForAll(marketplace.address, true);
 
-    return { nft, marketplace, owner, minterOne, minterTwo, buyer, seller, buyerTwo}
+    return { ledaNft, marketplace, owner, minterOne, minterTwo, buyer, seller, buyerTwo}
 }
 
 describe("Marketplace Contract Testing", () => { 
     describe("Deployment", function () {
 
         it ("should verify the contract's owner", async () => {
-            const {nft, marketplace, owner} = await loadFixture(marketplaceFixture);
-            expect(await nft.owner()).to.equal(owner.address);
+            const {ledaNft, marketplace, owner} = await loadFixture(marketplaceFixture);
+            expect(await ledaNft.owner()).to.equal(owner.address);
             expect(await marketplace.owner()).to.equal(owner.address);
         });
 
-        it("Should track name and symbol of the nft collection", async () => {
-            const {nft} = await loadFixture(marketplaceFixture);
+        it("Should track name and symbol of the ledaNft collection", async () => {
+            const {ledaNft} = await loadFixture(marketplaceFixture);
             
-            const nftName = "NFT LEDA Collection"
+            const nftName = "LEDA NFT Collection"
             const nftSymbol = "LEDA"
             
-            expect(await nft.name()).to.equal(nftName);
-            expect(await nft.symbol()).to.equal(nftSymbol);
+            expect(await ledaNft.name()).to.equal(nftName);
+            expect(await ledaNft.symbol()).to.equal(nftSymbol);
         });
 
         it("Should track feeAccount and feePercent of the marketplace", async function () {
             const {marketplace, owner} = await loadFixture(marketplaceFixture);
             //expect(await marketplace.feeAccount()).to.equal(owner.address);
-            expect(await marketplace.feePercent()).to.equal(1);
+            expect(await marketplace.feePercent()).to.equal(marketplaceFeePercent);
         });
 
         it("should be able to list nfts", async () => {
-            const {nft, marketplace, minterOne, minterTwo} = await loadFixture(marketplaceFixture);
-            nft.connect(minterOne).mint(URI);
-            nft.connect(minterTwo).mint(URI);
-            nft.connect(minterOne).mint(URI);
+            const {ledaNft, marketplace, minterOne, minterTwo} = await loadFixture(marketplaceFixture);
+            await ledaNft.connect(minterOne).mint(URI, creatorFeePercent);
+            await ledaNft.connect(minterTwo).mint(URI, creatorFeePercent);
+            await ledaNft.connect(minterOne).mint(URI, creatorFeePercent);
+            await ledaNft.connect(minterTwo).mint(URI, creatorFeePercent);
 
-            await nft.connect(minterOne).setApprovalForAll(marketplace.address, true);
-            await nft.connect(minterTwo).setApprovalForAll(marketplace.address, true);
-            await marketplace.connect(minterOne).makeItem(nft.address, 1, 1);
-            await marketplace.connect(minterTwo).makeItem(nft.address, 2, 2);
-            await marketplace.connect(minterOne).makeItem(nft.address, 3, 1);
+            
+            await ledaNft.connect(minterOne).setApprovalForAll(marketplace.address, true);
+            await ledaNft.connect(minterTwo).setApprovalForAll(marketplace.address, true);
+
+            await marketplace.connect(minterOne).makeItem(ledaNft.address, 1, 1000);
+            await marketplace.connect(minterTwo).makeItem(ledaNft.address, 2, 2000);
+            await marketplace.connect(minterOne).makeItem(ledaNft.address, 3, 1000);
+            await marketplace.connect(minterTwo).makeItem(ledaNft.address, 4, 1500);
 
             const itemsCount = await marketplace.getItemsCount();
             
@@ -90,103 +94,125 @@ describe("Marketplace Contract Testing", () => {
 
     describe("Minting NFTs", function () {
         it("should track each minted NFT", async () => {
-            const {nft, minterOne, minterTwo} = await loadFixture(marketplaceFixture);
+            const {ledaNft, minterOne, minterTwo} = await loadFixture(marketplaceFixture);
 
-            // minterOne mints an nft
-            await expect(nft.connect(minterOne).mint(URI))
-            .to.emit(nft, "LogNFTMinted")
+            // minterOne mints an ledaNft
+            await expect(ledaNft.connect(minterOne).mint(URI, creatorFeePercent))
+            .to.emit(ledaNft, "LogNFTMinted")
                 .withArgs(
                 1,
                 minterOne.address,
-                URI
+                URI,
+                creatorFeePercent
             );
+            
+            expect(await ledaNft.tokenCount()).to.equal(1);
+            expect(await ledaNft.balanceOf(minterOne.address)).to.equal(1);
+            expect(await ledaNft.tokenURI(1)).to.equal(URI);
 
-            expect(await nft.tokenCount()).to.equal(1);
-            expect(await nft.balanceOf(minterOne.address)).to.equal(1);
-            expect(await nft.tokenURI(1)).to.equal(URI);
-
-            // minterTwo mints an nft
-            await expect(nft.connect(minterTwo).mint(URI))
-            .to.emit(nft, "LogNFTMinted")
+            // minterTwo mints an ledaNft
+            await expect(ledaNft.connect(minterTwo).mint(URI, marketplaceFeePercent))
+            .to.emit(ledaNft, "LogNFTMinted")
                 .withArgs(
                 2,
                 minterTwo.address,
-                URI
+                URI,
+                marketplaceFeePercent
             );
-            expect(await nft.tokenCount()).to.equal(2);
-            expect(await nft.balanceOf(minterTwo.address)).to.equal(1);
-            expect(await nft.tokenURI(2)).to.equal(URI);
+            expect(await ledaNft.tokenCount()).to.equal(2);
+            expect(await ledaNft.balanceOf(minterTwo.address)).to.equal(1);
+            expect(await ledaNft.tokenURI(2)).to.equal(URI);
         });
 
         it("should track newly created item", async () => {
-            const price = 1;
-            const {nft, marketplace, minterOne} = await loadFixture(mintNFTs);
-            // minterOne offers their nft at a price of 1 ether
-            await expect(marketplace.connect(minterOne).makeItem(nft.address, 1 , toWei(price)))
+            const {ledaNft, marketplace,minterOne, minterTwo} = await loadFixture(marketplaceFixture);
+            const price = 1000;
+            const Not_Listed = 1;
+            
+            await ledaNft.connect(minterOne).mint(URI, creatorFeePercent);
+            await ledaNft.connect(minterOne).setApprovalForAll(marketplace.address, true);
+
+            await expect(marketplace.connect(minterOne).makeItem(
+                    ledaNft.address,
+                    1,
+                    price
+                ))
                 .to.emit(marketplace, "LogCreateItem")
                 .withArgs(
-                1,
-                nft.address,
-                1,
-                toWei(price),
-                minterOne.address
+                    1,
+                    ledaNft.address,
+                    1,
+                    price,
+                    minterOne.address,
+                    minterOne.address
             )
+            
             // Owner of NFT should now be the marketplace
-            expect(await nft.ownerOf(1)).to.equal(marketplace.address);
+            expect(await ledaNft.ownerOf(1)).to.equal(marketplace.address);
             // Item count should now equal 1
             expect(await marketplace.itemsCount()).to.equal(1)
             // Get item from items mapping then check fields to ensure they are correct
-            const item = await marketplace.items(1)
+            const item = await marketplace.items(1);
             expect(item.itemId).to.equal(1)
-            expect(item.nft).to.equal(nft.address)
+            expect(item.nftAddress).to.equal(ledaNft.address)
             expect(item.tokenId).to.equal(1)
-            expect(item.price).to.equal(toWei(price))
-            expect(item.sold).to.equal(false)
+            expect(item.price).to.equal(price)
+            expect(item.seller).to.equal(minterOne.address);
+            expect(item.creator).to.equal(minterOne.address);
+            expect(item.creatorRoyaltiesPercent).to.equal(creatorFeePercent);
+            expect(item.status).to.equal(Not_Listed);
         });
+        
+        it("should not fail if price is set to zero", async function () {
+            const {ledaNft, marketplace, minterOne} = await loadFixture(mintNFTs);
 
-        it("should fail if price is set to zero", async function () {
-            const {nft, marketplace, minterOne} = await loadFixture(mintNFTs);
-
-            await expect(
-                marketplace.connect(minterOne).makeItem(nft.address, 1, 0)
-            ).to.be.revertedWith("Price must be greater than zero");
+            await marketplace.connect(minterOne).makeItem(ledaNft.address, 1, 0);
+            expect(await await marketplace.itemsCount()).to.equal(1);
+            const item = await marketplace.items(1);
+            expect(item.price).to.equal(0);
         });
     });
-
+    
     describe("Should purchase marketplace items", () => {
-        const price = 2
-        const fee = (feePercent*price/100)
+        const price = 1000;
+        const marketplaceFee = (marketplaceFeePercent * price/1000)
         let totalPriceInWei:number;
         
         
         it("should update item when sold", async () => {
-            const {nft, marketplace, owner, minterOne, buyer} = await loadFixture(mintNFTs);
+            const {ledaNft, marketplace, owner, minterOne, buyer} = await loadFixture(mintNFTs);
+            expect(await marketplace.itemsCount()).to.equal(0);
 
-            const sellerInitalEthBal = await minterOne.getBalance();
+            const Listed = 0;
+            const Sold = 2;
 
-            await marketplace.connect(minterOne).makeItem(nft.address, 1 , toWei(price));
-            
-            const feeAccountInitialEthBal = await owner.getBalance()
-            // fetch items total price (market fees + item price)
-            totalPriceInWei = await marketplace.getTotalPrice(1);
+            await marketplace.connect(minterOne).makeItem(ledaNft.address, 1 , price);
+            await marketplace.connect(minterOne).changeItemStatus(1, Listed);
+
+            const item = await marketplace.items(1);
+            expect(item.status).to.equal(Listed);
 
             // buyer purchases item.
-            await expect(marketplace.connect(buyer).buyItem(1, {value: totalPriceInWei}))
+            await expect(marketplace.connect(buyer).buyItem(1, {value: price}))
             .to.emit(marketplace, "LogBuyItem")
                 .withArgs(
                 1,
-                nft.address,
+                ledaNft.address,
                 1,
-                toWei(price),
+                price,
                 minterOne.address,
                 buyer.address
-            )
-
-            const sellerFinalEthBal = await buyer.getBalance()
+            );
             
-            const feeAccountFinalEthBal = await owner.getBalance()
+            
             // Item should be marked as sold
-            expect((await marketplace.items(1)).sold).to.equal(true)
+            expect((await marketplace.items(1)).status).to.equal(Sold);
+
+            // The buyer should now own the ledaNft
+            expect(await ledaNft.ownerOf(1)).to.equal(buyer.address);
+
+            const contractBalance = await marketplace.getContractBalance();
+            console.log(contractBalance);
             
             // Seller should receive payment for the price of the NFT sold.
             //expect(+fromWei(sellerFinalEthBal)).to.equal( price + fromWei(sellerInitalEthBal))
@@ -194,23 +220,23 @@ describe("Marketplace Contract Testing", () => {
             // feeAccount should receive fee
             //expect(+fromWei(feeAccountFinalEthBal)).to.equal(+fee + +fromWei(feeAccountInitialEthBal));
             
-            // The buyer should now own the nft
-            expect(await nft.ownerOf(1)).to.equal(buyer.address);
+            
         });
 
+        /*
         it("should fail when buying requisits are not valid", async () => {
-            const {nft, marketplace, owner, minterOne, buyer, buyerTwo} = await loadFixture(marketplaceFixture);
+            const {ledaNft, marketplace, owner, minterOne, buyer, buyerTwo} = await loadFixture(marketplaceFixture);
             
-            await expect(nft.connect(minterOne).mint(URI))
-            .to.emit(nft, "LogNFTMinted")
+            await expect(ledaNft.connect(minterOne).mint(URI, creatorFeePercent))
+            .to.emit(ledaNft, "LogNFTMinted")
                 .withArgs(
                 1,
                 minterOne.address,
                 URI
             )
 
-            await nft.connect(minterOne).setApprovalForAll(marketplace.address, true);
-            await marketplace.connect(minterOne).makeItem(nft.address, 1 , toWei(price));
+            await ledaNft.connect(minterOne).setApprovalForAll(marketplace.address, true);
+            await marketplace.connect(minterOne).makeItem(ledaNft.address, 1 , toWei(price));
             totalPriceInWei = await marketplace.getTotalPrice(1);
 
             // fails for invalid item ids
@@ -223,7 +249,7 @@ describe("Marketplace Contract Testing", () => {
             ).to.be.revertedWith("item does not exist");
 
             // Fails when not enough ether is paid with the transaction. 
-            // In this instance, fails when buyer only sends enough ether to cover the price of the nft
+            // In this instance, fails when buyer only sends enough ether to cover the price of the ledaNft
             // not the additional market fee.
             await expect(
                 marketplace.connect(buyer).buyItem(1, {value: toWei(price)})
@@ -237,19 +263,20 @@ describe("Marketplace Contract Testing", () => {
                 marketplace.connect(buyerTwo).buyItem(1, {value: totalPriceInWei})
             ).to.be.revertedWith("item already sold");
         });
-        it("should be able to count sold nfts", async () => {
-            const {nft, marketplace, minterOne, minterTwo, buyer} = await loadFixture(marketplaceFixture);
-            nft.connect(minterOne).mint(URI);
-            nft.connect(minterTwo).mint(URI);
-            nft.connect(minterOne).mint(URI);
-            nft.connect(minterTwo).mint(URI);
 
-            await nft.connect(minterOne).setApprovalForAll(marketplace.address, true);
-            await nft.connect(minterTwo).setApprovalForAll(marketplace.address, true);
-            await marketplace.connect(minterOne).makeItem(nft.address, 1, toWei(price));
-            await marketplace.connect(minterTwo).makeItem(nft.address, 2, toWei(price));
-            await marketplace.connect(minterOne).makeItem(nft.address, 3, toWei(price));
-            await marketplace.connect(minterTwo).makeItem(nft.address, 4, toWei(price));
+        it("should be able to count sold nfts", async () => {
+            const {ledaNft, marketplace, minterOne, minterTwo, buyer} = await loadFixture(marketplaceFixture);
+            ledaNft.connect(minterOne).mint(URI);
+            ledaNft.connect(minterTwo).mint(URI);
+            ledaNft.connect(minterOne).mint(URI);
+            ledaNft.connect(minterTwo).mint(URI);
+
+            await ledaNft.connect(minterOne).setApprovalForAll(marketplace.address, true);
+            await ledaNft.connect(minterTwo).setApprovalForAll(marketplace.address, true);
+            await marketplace.connect(minterOne).makeItem(ledaNft.address, 1, toWei(price));
+            await marketplace.connect(minterTwo).makeItem(ledaNft.address, 2, toWei(price));
+            await marketplace.connect(minterOne).makeItem(ledaNft.address, 3, toWei(price));
+            await marketplace.connect(minterTwo).makeItem(ledaNft.address, 4, toWei(price));
 
             const totalPriceInWei = await marketplace.getTotalPrice(1);
 
@@ -260,16 +287,18 @@ describe("Marketplace Contract Testing", () => {
             expect(await marketplace.getItemsCount()).to.equal(4);
 
         });
+        */
     });
+    /*
     describe("Should purchase marketplace items", () => {
         const price = 2
         
         it("should be able to update an item listing status", async () => {
-            const {nft, marketplace, minterOne} = await loadFixture(marketplaceFixture);
-            nft.connect(minterOne).mint(URI);
+            const {ledaNft, marketplace, minterOne} = await loadFixture(marketplaceFixture);
+            ledaNft.connect(minterOne).mint(URI);
             
-            await nft.connect(minterOne).setApprovalForAll(marketplace.address, true);
-            await marketplace.connect(minterOne).makeItem(nft.address, 1, 1);
+            await ledaNft.connect(minterOne).setApprovalForAll(marketplace.address, true);
+            await marketplace.connect(minterOne).makeItem(ledaNft.address, 1, 1);
 
             await expect(marketplace.connect(minterOne).changeItemStatus(1, false))
             .to.emit(marketplace, "LogChangeStatus")
@@ -281,11 +310,11 @@ describe("Marketplace Contract Testing", () => {
         });
 
         it("should NOT be able to buy if the item is not listed", async () => {
-            const {nft, marketplace, minterOne, buyer} = await loadFixture(marketplaceFixture);
-            nft.connect(minterOne).mint(URI);
+            const {ledaNft, marketplace, minterOne, buyer} = await loadFixture(marketplaceFixture);
+            ledaNft.connect(minterOne).mint(URI);
 
-            await nft.connect(minterOne).setApprovalForAll(marketplace.address, true);
-            await marketplace.connect(minterOne).makeItem(nft.address, 1, toWei(price));
+            await ledaNft.connect(minterOne).setApprovalForAll(marketplace.address, true);
+            await marketplace.connect(minterOne).makeItem(ledaNft.address, 1, toWei(price));
 
             const totalPriceInWei = await marketplace.getTotalPrice(1);
 
@@ -295,6 +324,6 @@ describe("Marketplace Contract Testing", () => {
             .to.be.revertedWith("item should be listed");
             
         });
-    });
+    });*/
  
 });
