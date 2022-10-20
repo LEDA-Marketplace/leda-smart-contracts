@@ -21,12 +21,8 @@ contract LedaNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Ownabl
     
     mapping(uint => CreatorInfo) public creatorInfo;
 
-    event LogNFTMinted(
-        uint _nftId,
-        address _owner,
-        string _nftURI,
-        uint _royalties
-    );
+    event LogNFTMinted( uint _nftId, address _owner, string _nftURI, uint _royalties);
+    event LogGetCreator(uint _idNFT, address _owner, uint royalties);
 
     constructor(string memory _name, string memory _symbol) ERC721(_name, _symbol)
     {
@@ -78,6 +74,7 @@ contract LedaNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Ownabl
         override(ERC721, ERC721Enumerable)
     {
         super._beforeTokenTransfer(from, to, tokenId);
+
     }
 
     // The following functions are overrides required by Solidity.
@@ -85,7 +82,7 @@ contract LedaNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Ownabl
     function _burn(uint256 tokenId) internal override(ERC721, ERC721URIStorage) 
     {
         super._burn(tokenId);
-    }
+    } 
 
     function tokenURI(uint256 tokenId)
         public
@@ -104,8 +101,6 @@ contract LedaNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Ownabl
     {
         return super.supportsInterface(interfaceId);
     }
-
-    event LogGetCreator(uint _idNFT, address _owner, uint royalties);
 
     function getCreatorAndRoyalties(uint idNFT) external returns (address, uint) {
 

@@ -4,6 +4,7 @@ pragma solidity ^0.8.16;
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "hardhat/console.sol";
@@ -12,10 +13,10 @@ interface IGetCreatorAndRoyalties{
     function getCreatorAndRoyalties(uint idNFT) external returns (address, uint);
 }
 
-contract Marketplace is Ownable, ReentrancyGuard, Pausable {
+contract Marketplace is Ownable, ReentrancyGuard, Pausable, ERC721Holder {
     using Counters for Counters.Counter;
-    uint public feePercent; // the fee percentage on sales
-    uint public listingFeePercent;
+    uint public feePercentage; // the fee percentage on sales
+    uint public listingFeePercentage;
     Counters.Counter public itemsCount;
     Counters.Counter public itemsSold;
     // Royalties should be received as an integer number
@@ -24,8 +25,8 @@ contract Marketplace is Ownable, ReentrancyGuard, Pausable {
 
     enum item_status
     {
-      Listed,
       Not_Listed,
+      Listed,
       Sold
     }
 
@@ -36,7 +37,7 @@ contract Marketplace is Ownable, ReentrancyGuard, Pausable {
         uint price;
         address payable seller;
         address payable creator;
-        uint creatorRoyaltiesPercent;
+        uint creatorRoyaltiesPercentage;
         item_status status;
     }
 
@@ -66,31 +67,31 @@ contract Marketplace is Ownable, ReentrancyGuard, Pausable {
         address _seller, 
         item_status _newStatus);
 
-    constructor(uint _feePercent) {
-        feePercent = _feePercent;
-        listingFeePercent = 0;
+    constructor(uint _feePercentage) {
+        feePercentage = _feePercentage;
+        listingFeePercentage = 0;
     }
 
-    function setListingFeesPercent(uint _listingFeePercent) 
+    function setListingFeesPercentage(uint _listingFeePercentage) 
         onlyOwner 
         external 
     {
-        listingFeePercent = _listingFeePercent;
+        listingFeePercentage = _listingFeePercentage;
     }
 
-    function setFeePercent(uint _feePercent) 
+    function setFeePercentage(uint _feePercentage) 
         onlyOwner 
         external 
     {
-        feePercent = _feePercent;
+        feePercentage = _feePercentage;
     }
 
     function getListingFees(uint _price)
-        private
+        public
         view
         returns(uint)
     {
-        return (_price * listingFeePercent)/toPercentage;
+        return (_price * listingFeePercentage)/toPercentage;
     }
 
     function pause() public onlyOwner {
@@ -116,12 +117,12 @@ contract Marketplace is Ownable, ReentrancyGuard, Pausable {
         itemsCount.increment();
         uint itemId = itemsCount.current();
         // transfer nft
-        IERC721(_nft).transferFrom(msg.sender, address(this), _tokenId);
+        IERC721(_nft).safeTransferFrom(msg.sender, address(this), _tokenId);
 
-        if(listingFeesAmount > 0)
-            payable(address(this)).transfer(listingFeesAmount);
+        /*if(listingFeesAmount > 0)
+            payable(address(this)).transfer(listingFeesAmount);*/
 
-        (address _creator, uint _creatorRoyaltiesPercent) = IGetCreatorAndRoyalties(_nft).getCreatorAndRoyalties(_tokenId);
+        (address _creator, uint _creatorRoyaltiesPercentage) = IGetCreatorAndRoyalties(_nft).getCreatorAndRoyalties(_tokenId);
 
         // add new item to items mapping
         items[itemId] = Item(
@@ -131,7 +132,7 @@ contract Marketplace is Ownable, ReentrancyGuard, Pausable {
             _price,
             payable(msg.sender),
             payable(_creator),
-            _creatorRoyaltiesPercent,
+            _creatorRoyaltiesPercentage,
             item_status.Not_Listed
         );
         // emit Offered event
@@ -186,9 +187,7 @@ contract Marketplace is Ownable, ReentrancyGuard, Pausable {
         require(item.status == item_status.Listed, "item should be listed");
 
         (uint sellerAmount, uint creatorAmount) 
-            = getRoyalties(_itemId, item.creatorRoyaltiesPercent);
-        console.log(sellerAmount);
-        console.log(creatorAmount);
+            = getRoyalties(_itemId, item.creatorRoyaltiesPercentage);
         // pay seller and feeAccount
         (item.creator).transfer(creatorAmount);
         (item.seller).transfer(sellerAmount);
@@ -197,7 +196,7 @@ contract Marketplace is Ownable, ReentrancyGuard, Pausable {
         item.status =  item_status.Sold;
         // transfer nft to buyer
         address nft = item.nftAddress;
-        IERC721(nft).transferFrom(address(this), msg.sender, item.tokenId);
+        IERC721(nft).safeTransferFrom(address(this), msg.sender, item.tokenId);
         // increase counter
         itemsSold.increment();
         // emit Bought event
@@ -227,7 +226,7 @@ contract Marketplace is Ownable, ReentrancyGuard, Pausable {
         return itemsCount.current();
     }
 
-    function getRoyalties(uint _itemId, uint _creatorRoyaltiesPercent) 
+    function getRoyalties(uint _itemId, uint _creatorRoyaltiesPercentage) 
         view 
         private 
         returns(uint _sellerAmount, uint _creatorAmount)
@@ -235,8 +234,8 @@ contract Marketplace is Ownable, ReentrancyGuard, Pausable {
         uint _platformFees;
         uint _price = items[_itemId].price;
         
-        _creatorAmount = (_price * _creatorRoyaltiesPercent)/toPercentage; 
-        _platformFees = (_price * feePercent)/toPercentage;
+        _creatorAmount = (_price * _creatorRoyaltiesPercentage)/toPercentage; 
+        _platformFees = (_price * feePercentage)/toPercentage;
         _sellerAmount = _price - _platformFees - _creatorAmount;
     }
 }
