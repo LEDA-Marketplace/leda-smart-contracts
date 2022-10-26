@@ -32,6 +32,7 @@ function saveFrontendFiles(contract:any, name:string) {
   const hre = require('hardhat');
 
   const contractsDir = __dirname + "/../data";
+  //const contractsDir = "/Users/gimer/Desktop/Stackit/Projects/NFTs/leda-web/src/contracts";
 
   if (!fs.existsSync(contractsDir)) {
     fs.mkdirSync(contractsDir);
