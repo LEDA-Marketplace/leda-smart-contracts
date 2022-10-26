@@ -67,6 +67,11 @@ contract Marketplace is Ownable, ReentrancyGuard, Pausable, ERC721Holder {
         address _seller, 
         item_status _newStatus);
 
+    event LogChangePrice(
+        uint _itemId, 
+        address _sender, 
+        uint _newPrice);
+
     constructor(uint _feePercentage) {
         feePercentage = _feePercentage;
         listingFeePercentage = 0;
@@ -133,7 +138,7 @@ contract Marketplace is Ownable, ReentrancyGuard, Pausable, ERC721Holder {
             payable(msg.sender),
             payable(_creator),
             _creatorRoyaltiesPercentage,
-            item_status.Not_Listed
+            item_status.Listed
         );
         // emit Offered event
         emit LogCreateItem(
@@ -156,6 +161,17 @@ contract Marketplace is Ownable, ReentrancyGuard, Pausable, ERC721Holder {
         require(item.status != item_status.Sold, "item already sold!");
         item.status = _newStatus;
         emit LogChangeStatus(_itemId, msg.sender, _newStatus);
+    }
+
+    function changeItemPrice(uint _itemId, uint _newPrice)
+        external
+    {
+        Item storage item = items[_itemId];
+        require(item.seller == msg.sender, "only seller can change status!");
+        require(item.status != item_status.Sold, "item already sold!");
+        require(item.status == item_status.Not_Listed, "item should be listed");
+        item.price = _newPrice;
+        emit LogChangePrice(_itemId, msg.sender, _newPrice);
     }
 
     function getContractBalance()

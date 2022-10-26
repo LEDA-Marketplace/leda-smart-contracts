@@ -21,7 +21,7 @@ async function marketplaceFixture() {
 
 
 
-describe("Marketplace Contract Testing", () => { 
+describe("JupApes Contract Testing", () => { 
     describe("Minting NFTs", function () {
         it("should be able to mint an Ape NFT", async () => {
             const {apesNft, owner, minterOne, minterTwo, buyer, seller, buyerTwo} = await loadFixture(marketplaceFixture);
