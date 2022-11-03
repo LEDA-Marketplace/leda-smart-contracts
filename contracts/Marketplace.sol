@@ -1,24 +1,27 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.16;
 
-import "@openzeppelin/contracts/utils/Counters.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol";
+
 import "hardhat/console.sol";
 
 interface IGetCreatorAndRoyalties{
     function getCreatorAndRoyalties(uint idNFT) external returns (address, uint);
 }
 
-contract Marketplace is Ownable, ReentrancyGuard, Pausable, ERC721Holder {
-    using Counters for Counters.Counter;
+contract Marketplace is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable, ERC721HolderUpgradeable {
+    using CountersUpgradeable for CountersUpgradeable.Counter;
+    CountersUpgradeable.Counter public itemsCount;
+    CountersUpgradeable.Counter public itemsSold;
+
     uint public feePercentage; // the fee percentage on sales
     uint public listingFeePercentage;
-    Counters.Counter public itemsCount;
-    Counters.Counter public itemsSold;
     // Royalties should be received as an integer number
     // i.e., if royalties are 2.5% this contract should receive 25
     uint constant toPercentage = 1000;
@@ -72,7 +75,12 @@ contract Marketplace is Ownable, ReentrancyGuard, Pausable, ERC721Holder {
         address _sender, 
         uint _newPrice);
 
-    constructor(uint _feePercentage) {
+    function initialize(uint _feePercentage) 
+        public
+        initializer
+    {
+        __Pausable_init();
+        __Ownable_init();
         feePercentage = _feePercentage;
         listingFeePercentage = 0;
     }
@@ -122,7 +130,7 @@ contract Marketplace is Ownable, ReentrancyGuard, Pausable, ERC721Holder {
         itemsCount.increment();
         uint itemId = itemsCount.current();
         // transfer nft
-        IERC721(_nft).safeTransferFrom(msg.sender, address(this), _tokenId);
+        IERC721Upgradeable(_nft).safeTransferFrom(msg.sender, address(this), _tokenId);
 
         /*if(listingFeesAmount > 0)
             payable(address(this)).transfer(listingFeesAmount);*/
@@ -212,7 +220,7 @@ contract Marketplace is Ownable, ReentrancyGuard, Pausable, ERC721Holder {
         item.status =  item_status.Sold;
         // transfer nft to buyer
         address nft = item.nftAddress;
-        IERC721(nft).safeTransferFrom(address(this), msg.sender, item.tokenId);
+        IERC721Upgradeable(nft).safeTransferFrom(address(this), msg.sender, item.tokenId);
         // increase counter
         itemsSold.increment();
         // emit Bought event
