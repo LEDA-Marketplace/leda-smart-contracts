@@ -19,8 +19,6 @@ async function marketplaceFixture() {
         return { apesNft, owner, minterOne, minterTwo, buyer, seller, buyerTwo}
 }
 
-
-
 describe("JupApes Contract Testing", () => { 
     describe("Minting NFTs", function () {
         it("should be able to mint an Ape NFT", async () => {

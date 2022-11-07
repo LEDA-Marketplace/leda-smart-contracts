@@ -1,11 +1,16 @@
 import { HardhatUserConfig } from "hardhat/config";
+import '@openzeppelin/hardhat-upgrades';
 import "@nomicfoundation/hardhat-toolbox";
+import "@nomiclabs/hardhat-etherscan";
+import { ethers } from "hardhat"
 
 require("dotenv").config();
 
 const { GOERLI_URL, PRIVATE_KEY } = process.env;
+
+const PRIVATE = PRIVATE_KEY;
 const config: HardhatUserConfig = {
-  solidity: "0.8.16",
+  solidity: "0.8.17",
   
   networks: {
     hardhat: {
@@ -14,7 +19,8 @@ const config: HardhatUserConfig = {
     goerli: {
       url: GOERLI_URL || "",
       accounts: PRIVATE_KEY !== undefined ? [PRIVATE_KEY] : [],
-      gasPrice: 300000000
+      gasPrice: 600000000000,
+      gas: 50000000000000
     },
   },
   etherscan: {

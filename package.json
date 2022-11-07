@@ -2,15 +2,25 @@
   "name": "hardhat-project",
   "scripts": {
     "start": "hardhat node",
-    "deploy:localhost": "hardhat run scripts/deploy.ts --network localhost",
+    "deploy:localhost": "hardhat run scripts/deploy.ts --network hardhat",
+    "deploy:testnet": "hardhat run scripts/deploy.ts --network goerli",
+    "deployProxy:localhost": "hardhat run scripts/deploy_proxy.ts --network hardhat",
+    "deployProxy:testnet": "hardhat run scripts/deploy_proxy.ts --network goerli",
+    "test:proxy": "hardhat test test/MarketplaceProxyTest.ts --network hardhat",
+    "test:upgrade": "hardhat test test/MarketplaceUpgradeTest.ts --network hardhat",
     "test": "hardhat test"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "1.0.2",
+    "@nomiclabs/hardhat-ethers": "^2.2.1",
+    "@nomiclabs/hardhat-etherscan": "^3.1.2",
+    "@openzeppelin/hardhat-upgrades": "^1.21.0",
+    "ethers": "^5.7.2",
     "hardhat": "2.11.2"
   },
   "dependencies": {
     "@openzeppelin/contracts": "4.7.3",
+    "@openzeppelin/contracts-upgradeable": "^4.7.3",
     "dotenv": "16.0.2"
   }
 }
