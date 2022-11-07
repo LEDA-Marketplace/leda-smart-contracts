@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.16;
+pragma solidity 0.8.17;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
@@ -7,6 +7,7 @@ import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol";
 
 import "hardhat/console.sol";
@@ -15,10 +16,10 @@ interface IGetCreatorAndRoyalties{
     function getCreatorAndRoyalties(uint idNFT) external returns (address, uint);
 }
 
-contract Marketplace is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable, ERC721HolderUpgradeable {
+contract Marketplace is UUPSUpgradeable, OwnableUpgradeable, ERC721HolderUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable {
     using CountersUpgradeable for CountersUpgradeable.Counter;
-    CountersUpgradeable.Counter public itemsCount;
-    CountersUpgradeable.Counter public itemsSold;
+    CountersUpgradeable.Counter private itemsCount;
+    CountersUpgradeable.Counter private itemsSold;
 
     uint public feePercentage; // the fee percentage on sales
     uint public listingFeePercentage;
@@ -79,8 +80,10 @@ contract Marketplace is OwnableUpgradeable, ReentrancyGuardUpgradeable, Pausable
         public
         initializer
     {
-        __Pausable_init();
+        __UUPSUpgradeable_init();
         __Ownable_init();
+        __Pausable_init();
+        __ERC721Holder_init();
         feePercentage = _feePercentage;
         listingFeePercentage = 0;
     }
@@ -132,9 +135,6 @@ contract Marketplace is OwnableUpgradeable, ReentrancyGuardUpgradeable, Pausable
         // transfer nft
         IERC721Upgradeable(_nft).safeTransferFrom(msg.sender, address(this), _tokenId);
 
-        /*if(listingFeesAmount > 0)
-            payable(address(this)).transfer(listingFeesAmount);*/
-
         (address _creator, uint _creatorRoyaltiesPercentage) = IGetCreatorAndRoyalties(_nft).getCreatorAndRoyalties(_tokenId);
 
         // add new item to items mapping
@@ -159,6 +159,9 @@ contract Marketplace is OwnableUpgradeable, ReentrancyGuardUpgradeable, Pausable
         );
         return itemsCount.current();
     }
+    
+    // This function is required by the OpenZeppelin module.
+    function _authorizeUpgrade(address) internal override onlyOwner {}
 
     function changeItemStatus(uint _itemId, item_status _newStatus)
         external

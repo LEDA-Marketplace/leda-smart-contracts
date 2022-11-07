@@ -12,3 +12,5 @@ artifacts
 data/.DS_Store
 data
 .DS_Store
+.openzeppelin/
+.openzeppelin/unknown-1337.json
