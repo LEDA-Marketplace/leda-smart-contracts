@@ -1,14 +1,22 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.17;
+pragma solidity 0.8.16;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
-contract LedaNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Ownable {
+contract LedaNFT is 
+        ERC721, 
+        ReentrancyGuard, 
+        ERC721Enumerable, 
+        ERC721URIStorage, 
+        Pausable, 
+        Ownable 
+    {
     using Counters for Counters.Counter;
     Counters.Counter public tokenCount;
 
@@ -24,7 +32,7 @@ contract LedaNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Ownabl
     event LogNFTMinted( uint _nftId, address _owner, string _nftURI, uint _royalties);
     event LogGetCreator(uint _idNFT, address _owner, uint royalties);
 
-    constructor(string memory _name, string memory _symbol) ERC721(_name, _symbol)
+    constructor(string memory name, string memory symbol) ERC721(name, symbol)
     {
         // This means that the maximun amount is 10%
         maxCreatorRoyalties = 100;
@@ -37,11 +45,11 @@ contract LedaNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Ownabl
         maxCreatorRoyalties = _maxCreatorRoyalties;
     }
 
-    function pause() public onlyOwner {
+    function pause() external onlyOwner {
         _pause();
     }
 
-    function unpause() public onlyOwner {
+    function unpause() external onlyOwner {
         _unpause();
     }
 
@@ -49,6 +57,7 @@ contract LedaNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Ownabl
     // i.e., if royalties are 2.5% this contract should receive 25
     function mint(string memory _tokenURI, uint _royaltiesPercentage)
         whenNotPaused
+        nonReentrant
         external 
         returns(uint) 
     {
@@ -58,13 +67,14 @@ contract LedaNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Ownabl
 
         tokenCount.increment();
         uint itemId = tokenCount.current();
-        _safeMint(msg.sender, itemId);
-        _setTokenURI(itemId, _tokenURI);
 
         creatorInfo[itemId] = CreatorInfo(msg.sender, _royaltiesPercentage);
-
-        emit LogNFTMinted(itemId, msg.sender, _tokenURI, _royaltiesPercentage);
         
+        _safeMint(msg.sender, itemId);
+        _setTokenURI(itemId, _tokenURI);
+        
+        emit LogNFTMinted(itemId, msg.sender, _tokenURI, _royaltiesPercentage);
+
         return(itemId);
     }
 
