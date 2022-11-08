@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.17;
+pragma solidity 0.8.16;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
@@ -10,13 +10,17 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol"
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol";
 
-import "hardhat/console.sol";
-
 interface IGetCreatorAndRoyalties{
     function getCreatorAndRoyalties(uint idNFT) external returns (address, uint);
 }
 
-contract Marketplace is UUPSUpgradeable, OwnableUpgradeable, ERC721HolderUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable {
+contract Marketplace is 
+            UUPSUpgradeable, 
+            OwnableUpgradeable, 
+            ERC721HolderUpgradeable, 
+            ReentrancyGuardUpgradeable, 
+            PausableUpgradeable 
+    {
     using CountersUpgradeable for CountersUpgradeable.Counter;
     CountersUpgradeable.Counter private itemsCount;
     CountersUpgradeable.Counter private itemsSold;
@@ -25,7 +29,7 @@ contract Marketplace is UUPSUpgradeable, OwnableUpgradeable, ERC721HolderUpgrade
     uint public listingFeePercentage;
     // Royalties should be received as an integer number
     // i.e., if royalties are 2.5% this contract should receive 25
-    uint constant toPercentage = 1000;
+    uint constant TO_PERCENTAGE = 1000;
 
     enum item_status
     {
@@ -107,14 +111,14 @@ contract Marketplace is UUPSUpgradeable, OwnableUpgradeable, ERC721HolderUpgrade
         view
         returns(uint)
     {
-        return (_price * listingFeePercentage)/toPercentage;
+        return (_price * listingFeePercentage)/TO_PERCENTAGE;
     }
 
-    function pause() public onlyOwner {
+    function pause() external onlyOwner {
         _pause();
     }
 
-    function unpause() public onlyOwner {
+    function unpause() external onlyOwner {
         _unpause();
     }
 
@@ -126,16 +130,14 @@ contract Marketplace is UUPSUpgradeable, OwnableUpgradeable, ERC721HolderUpgrade
         payable
         returns(uint)
     {
-        //require(_price > 0, "Price must be greater than zero!");
         uint listingFeesAmount = getListingFees(_price);
         require(listingFeesAmount <= msg.value, "Should pay listing fees!");
         // increment itemCount
         itemsCount.increment();
         uint itemId = itemsCount.current();
-        // transfer nft
-        IERC721Upgradeable(_nft).safeTransferFrom(msg.sender, address(this), _tokenId);
-
-        (address _creator, uint _creatorRoyaltiesPercentage) = IGetCreatorAndRoyalties(_nft).getCreatorAndRoyalties(_tokenId);
+        
+        (address _creator, uint _creatorRoyaltiesPercentage) = 
+                    IGetCreatorAndRoyalties(_nft).getCreatorAndRoyalties(_tokenId);
 
         // add new item to items mapping
         items[itemId] = Item(
@@ -157,6 +159,10 @@ contract Marketplace is UUPSUpgradeable, OwnableUpgradeable, ERC721HolderUpgrade
             msg.sender,
             _creator
         );
+
+        // transfer nft
+        IERC721Upgradeable(_nft).safeTransferFrom(msg.sender, address(this), _tokenId);
+
         return itemsCount.current();
     }
     
@@ -221,11 +227,11 @@ contract Marketplace is UUPSUpgradeable, OwnableUpgradeable, ERC721HolderUpgrade
         
         // update item to sold
         item.status =  item_status.Sold;
-        // transfer nft to buyer
-        address nft = item.nftAddress;
-        IERC721Upgradeable(nft).safeTransferFrom(address(this), msg.sender, item.tokenId);
+        
+
         // increase counter
         itemsSold.increment();
+
         // emit Bought event
         emit LogBuyItem(
             _itemId,
@@ -235,11 +241,15 @@ contract Marketplace is UUPSUpgradeable, OwnableUpgradeable, ERC721HolderUpgrade
             item.seller,
             msg.sender
         );
+        // transfer nft to buyer
+        address nft = item.nftAddress;
+
+        IERC721Upgradeable(nft).safeTransferFrom(address(this), msg.sender, item.tokenId);
     }
 
     function getItemsSold() 
         view 
-        public 
+        external 
         returns (uint) 
     {
         return itemsSold.current();
@@ -247,7 +257,7 @@ contract Marketplace is UUPSUpgradeable, OwnableUpgradeable, ERC721HolderUpgrade
 
     function getItemsCount() 
         view 
-        public 
+        external 
         returns (uint) 
     {
         return itemsCount.current();
@@ -261,8 +271,8 @@ contract Marketplace is UUPSUpgradeable, OwnableUpgradeable, ERC721HolderUpgrade
         uint _platformFees;
         uint _price = items[_itemId].price;
         
-        _creatorAmount = (_price * _creatorRoyaltiesPercentage)/toPercentage; 
-        _platformFees = (_price * feePercentage)/toPercentage;
+        _creatorAmount = (_price * _creatorRoyaltiesPercentage)/TO_PERCENTAGE; 
+        _platformFees = (_price * feePercentage)/TO_PERCENTAGE;
         _sellerAmount = _price - _platformFees - _creatorAmount;
     }
 }

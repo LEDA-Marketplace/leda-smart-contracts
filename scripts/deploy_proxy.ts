@@ -5,6 +5,11 @@ import { any, string } from "hardhat/internal/core/params/argumentTypes";
 
 async function main() {
 
+    // Goerli Testnet
+    // LedaNFT: 0x72b5d93E1007666C889aF489f9Ea1788d5ACCAfb
+    // Marketplace: 0xaFa91a3a0bB0286a7D480c7Df99E3D1897621d5E
+    // Implementation: 0x5DbcD023AA6A4fBD6501eB67bd02e621E22f1184
+
     const [owner] = await ethers.getSigners();
     console.log("\n");
     console.log("Deploying Box...");

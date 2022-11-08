@@ -10,7 +10,7 @@ const { GOERLI_URL, PRIVATE_KEY } = process.env;
 
 const PRIVATE = PRIVATE_KEY;
 const config: HardhatUserConfig = {
-  solidity: "0.8.17",
+  solidity: "0.8.16",
   
   networks: {
     hardhat: {
