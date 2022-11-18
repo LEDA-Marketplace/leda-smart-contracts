@@ -84,7 +84,6 @@ contract LedaNFT is
         override(ERC721, ERC721Enumerable)
     {
         super._beforeTokenTransfer(from, to, tokenId);
-
     }
 
     // The following functions are overrides required by Solidity.
@@ -112,10 +111,11 @@ contract LedaNFT is
         return super.supportsInterface(interfaceId);
     }
 
-    function getCreatorAndRoyalties(uint idNFT) external returns (address, uint) {
+    function getCreatorAndRoyalties(uint idNFT) external returns (address, uint, bool) {
+        require(creatorInfo[idNFT].creator != address(0), "NFT it does not exists!");
 
         emit LogGetCreator(idNFT, creatorInfo[idNFT].creator, creatorInfo[idNFT].royalties);
 
-        return (creatorInfo[idNFT].creator, creatorInfo[idNFT].royalties);
+        return (creatorInfo[idNFT].creator, creatorInfo[idNFT].royalties, true);
     }
 }

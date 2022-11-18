@@ -104,10 +104,11 @@ describe("LedaNFT Contract Testing", () => {
 
             await ledaNft.connect(minterOne).mint(URI, creatorFeePercent);
 
-            const [_creator, _royalties] = await ledaNft.connect(minterOne).callStatic.getCreatorAndRoyalties(1);
+            const [_creator, _royalties, _success] = await ledaNft.connect(minterOne).callStatic.getCreatorAndRoyalties(1);
 
             expect(_creator).to.equal(minterOne.address);
             expect(_royalties).to.equal(creatorFeePercent);
+            expect(_success).to.equal(true);
         });
 
         it("should transfer an nft using transferFrom directly", async () => {

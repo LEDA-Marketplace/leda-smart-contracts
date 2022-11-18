@@ -27,6 +27,7 @@ contract Marketplace is
 
     uint public feePercentage; // the fee percentage on sales
     uint public listingFeePercentage;
+    
     // Royalties should be received as an integer number
     // i.e., if royalties are 2.5% this contract should receive 25
     uint constant TO_PERCENTAGE = 1000;
@@ -130,8 +131,17 @@ contract Marketplace is
         payable
         returns(uint)
     {
-        uint listingFeesAmount = getListingFees(_price);
-        require(listingFeesAmount <= msg.value, "Should pay listing fees!");
+        require(_nft != address(0), "Zero address is not allowed!");
+        require(_tokenId > 0, "Token id should be greater than zero!");
+        require(
+            IERC721Upgradeable(_nft).ownerOf(_tokenId) == msg.sender, 
+            "Only owner can list its NFT!"
+        );
+        require(
+            getListingFees(_price) <= msg.value, 
+            "Should pay listing fees!"
+        );
+        
         // increment itemCount
         itemsCount.increment();
         uint itemId = itemsCount.current();
@@ -169,8 +179,16 @@ contract Marketplace is
     // This function is required by the OpenZeppelin module.
     function _authorizeUpgrade(address) internal override onlyOwner {}
 
-    function changeItemStatus(uint _itemId, item_status _newStatus)
+    function getListedAgain(uint _itemId, uint _newPrice)
         external
+    {
+        require(changeItemPrice(_itemId, _newPrice), "Set new price failed!");
+        require(changeItemStatus(_itemId, item_status.Listed), "Set new item status failed!");
+    }
+
+    function changeItemStatus(uint _itemId, item_status _newStatus)
+        public
+        returns(bool)
     {
         Item storage item = items[_itemId];
         require(item.seller == msg.sender, "only seller can change status!");
@@ -178,17 +196,23 @@ contract Marketplace is
         require(item.status != item_status.Sold, "item already sold!");
         item.status = _newStatus;
         emit LogChangeStatus(_itemId, msg.sender, _newStatus);
+
+        return true;
     }
 
     function changeItemPrice(uint _itemId, uint _newPrice)
-        external
+        internal
+        returns(bool)
     {
         Item storage item = items[_itemId];
         require(item.seller == msg.sender, "only seller can change status!");
         require(item.status != item_status.Sold, "item already sold!");
-        require(item.status == item_status.Not_Listed, "item should be listed");
+        require(item.status == item_status.Not_Listed, "item should not be listed");
+
         item.price = _newPrice;
         emit LogChangePrice(_itemId, msg.sender, _newPrice);
+
+        return true;
     }
 
     function getContractBalance()
@@ -228,7 +252,6 @@ contract Marketplace is
         // update item to sold
         item.status =  item_status.Sold;
         
-
         // increase counter
         itemsSold.increment();
 

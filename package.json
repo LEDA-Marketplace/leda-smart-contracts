@@ -2,11 +2,13 @@
   "name": "hardhat-project",
   "scripts": {
     "start": "hardhat node",
+    "compile": "hardhat compile",
     "deploy:localhost": "hardhat run scripts/deploy.ts --network localhost",
     "deploy:testnet": "hardhat run scripts/deploy.ts --network goerli",
     "deployProxy:localhost": "hardhat run scripts/deploy_proxy.ts --network localhost",
     "deployProxy:testnet": "hardhat run scripts/deploy_proxy.ts --network goerli",
     "test:proxy": "hardhat test test/MarketplaceProxyTest.ts --network localhost",
+    "test:LedaNft": "hardhat test test/LedaNftTest.ts",
     "test:upgrade": "hardhat test test/MarketplaceUpgradeTest.ts --network localhost",
     "test": "hardhat test"
   },

@@ -11,7 +11,7 @@ const fromWei = (num:number) => ethers.utils.formatEther(num)
 async function marketplaceFixture() {
         const [owner, minterOne, minterTwo, buyer, seller, buyerTwo] = await ethers.getSigners();
         
-        const ApesNFT = await ethers.getContractFactory("ApesNFT");
+        const ApesNFT = await ethers.getContractFactory("JupApesNFT");
         const apesNft = await ApesNFT.deploy("Jupe Apes NFTs", "APES", 3);
 
         await apesNft.deployed();
@@ -24,8 +24,8 @@ describe("JupApes Contract Testing", () => {
         it("should be able to mint an Ape NFT", async () => {
             const {apesNft, owner, minterOne, minterTwo, buyer, seller, buyerTwo} = await loadFixture(marketplaceFixture);
  
-            const tx1 = await apesNft.connect(owner).mint(URI, [[1,1],[2,0]]);
-            const tx2 = await apesNft.connect(owner).mint(URI, [[2,1],[3,1],[4,1]]);
+            const tx1 = await apesNft.connect(owner).mint(owner.address, URI, 50);
+            const tx2 = await apesNft.connect(owner).mint(owner.address, URI, 50);
             const receipt = await tx2.wait();
             const [events] = receipt.events;
             /* 
@@ -37,7 +37,7 @@ describe("JupApes Contract Testing", () => {
             expect(await apesNft.ownerOf(1)).to.equal(owner.address);
             expect(await apesNft.tokenURI(1)).to.equal(URI);
 
-            const attributes = await apesNft.getApeAttributes(1);
+            //const attributes = await apesNft.getApeAttributes(1);
 
             //console.log("Attributes: ", attributes);
         });
