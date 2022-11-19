@@ -161,8 +161,8 @@ describe("Upgrading Marketplace Contract Testing", () => {
             await ledaNft.connect(minterOne).setApprovalForAll(proxyOne.address, true);
             await ledaNft.connect(minterTwo).setApprovalForAll(proxyOne.address, true);
             
-            await proxyOne.connect(minterOne).makeItem(ledaNft.address, 1, 1000);
-            await proxyOne.connect(minterTwo).makeItem(ledaNft.address, 2, 2000);
+            await proxyOne.connect(minterOne).makeItem(ledaNft.address, 1, price);
+            await proxyOne.connect(minterTwo).makeItem(ledaNft.address, 2, price * 2);
 
             expect(await proxyOne.listingFeePercentage()).to.equal(zero);
             
@@ -191,14 +191,16 @@ describe("Upgrading Marketplace Contract Testing", () => {
 
             const itemOne = await proxyTwo.items(1);
             const itemTwo = await proxyTwo.items(2);
-            
+            const [_receiverOne, _royaltyAmountOne] = await ledaNft.royaltyInfo(itemOne.itemId, price);
+            const [_receiverTwo, _royaltyAmountTwo] = await ledaNft.royaltyInfo(itemTwo.itemId, price * 2);
+
             expect(itemOne.itemId).to.equal(1)
             expect(itemOne.nftAddress).to.equal(ledaNft.address)
             expect(itemOne.tokenId).to.equal(1)
             expect(itemOne.price).to.equal(price)
             expect(itemOne.seller).to.equal(minterOne.address);
             expect(itemOne.creator).to.equal(minterOne.address);
-            expect(itemOne.creatorRoyaltiesPercentage).to.equal(creatorFeePercentage);
+            expect(itemOne.creatorRoyalties).to.equal(_royaltyAmountOne);
             expect(itemOne.status).to.equal(Listed);
 
             expect(itemTwo.itemId).to.equal(2)
@@ -207,7 +209,7 @@ describe("Upgrading Marketplace Contract Testing", () => {
             expect(itemTwo.price).to.equal(price * 2)
             expect(itemTwo.seller).to.equal(minterTwo.address);
             expect(itemTwo.creator).to.equal(minterTwo.address);
-            expect(itemTwo.creatorRoyaltiesPercentage).to.equal(creatorFeePercentage);
+            expect(itemTwo.creatorRoyalties).to.equal(_royaltyAmountTwo);
             expect(itemTwo.status).to.equal(Listed);
         });
 

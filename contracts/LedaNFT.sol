@@ -8,26 +8,21 @@ import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/token/common/ERC2981.sol";
 
 contract LedaNFT is 
-        ERC721, 
+        ERC721,
+        ERC2981,
         ReentrancyGuard, 
         ERC721Enumerable, 
         ERC721URIStorage, 
         Pausable, 
-        Ownable 
+        Ownable
     {
     using Counters for Counters.Counter;
     Counters.Counter public tokenCount;
 
     uint public maxCreatorRoyalties;
-
-    struct CreatorInfo {
-        address creator;
-        uint royalties;
-    }
-    
-    mapping(uint => CreatorInfo) public creatorInfo;
 
     event LogNFTMinted( uint _nftId, address _owner, string _nftURI, uint _royalties);
     event LogGetCreator(uint _idNFT, address _owner, uint royalties);
@@ -55,27 +50,28 @@ contract LedaNFT is
 
     // Royalties should be received as an integer number
     // i.e., if royalties are 2.5% this contract should receive 25
-    function mint(string memory _tokenURI, uint _royaltiesPercentage)
+    function mint(string memory _tokenURI, uint96 _royaltiesPercentage)
         whenNotPaused
         nonReentrant
         external 
         returns(uint) 
     {
-        require(_royaltiesPercentage <= maxCreatorRoyalties, 
-                "Royalties percentage exceeds the maximum value!"
-                );
+        require(
+            _royaltiesPercentage <= maxCreatorRoyalties, 
+            "Royalties percentage exceeds the maximum value!"
+        );
 
         tokenCount.increment();
-        uint itemId = tokenCount.current();
+        uint tokenId = tokenCount.current();
 
-        creatorInfo[itemId] = CreatorInfo(msg.sender, _royaltiesPercentage);
+        _setTokenRoyalty(tokenId, msg.sender, _royaltiesPercentage);
         
-        _safeMint(msg.sender, itemId);
-        _setTokenURI(itemId, _tokenURI);
+        _safeMint(msg.sender, tokenId);
+        _setTokenURI(tokenId, _tokenURI);
         
-        emit LogNFTMinted(itemId, msg.sender, _tokenURI, _royaltiesPercentage);
+        emit LogNFTMinted(tokenId, msg.sender, _tokenURI, _royaltiesPercentage);
 
-        return(itemId);
+        return(tokenId);
     }
 
     function _beforeTokenTransfer(address from, address to, uint256 tokenId)
@@ -87,7 +83,6 @@ contract LedaNFT is
     }
 
     // The following functions are overrides required by Solidity.
-
     function _burn(uint256 tokenId) internal override(ERC721, ERC721URIStorage) 
     {
         super._burn(tokenId);
@@ -102,20 +97,17 @@ contract LedaNFT is
         return super.tokenURI(tokenId);
     }
 
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        override(ERC721, ERC721Enumerable)
-        returns (bool)
+    function supportsInterface(bytes4 interfaceId) 
+        public 
+        view 
+        virtual 
+        override(ERC721, ERC2981, ERC721Enumerable) 
+        returns (bool) 
     {
         return super.supportsInterface(interfaceId);
     }
 
-    function getCreatorAndRoyalties(uint idNFT) external returns (address, uint, bool) {
-        require(creatorInfo[idNFT].creator != address(0), "NFT it does not exists!");
-
-        emit LogGetCreator(idNFT, creatorInfo[idNFT].creator, creatorInfo[idNFT].royalties);
-
-        return (creatorInfo[idNFT].creator, creatorInfo[idNFT].royalties, true);
+    function _feeDenominator() internal pure override returns (uint96) {
+        return 1000;
     }
 }

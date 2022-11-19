@@ -170,20 +170,24 @@ describe("Marketplace Contract Testing", () => {
                     minterOne.address,
                     minterOne.address
             )
+            //
             
+
             // Owner of NFT should now be the marketplace
             expect(await ledaNft.ownerOf(1)).to.equal(proxy.address);
             // Item count should now equal 1
             expect(await proxy.getItemsCount()).to.equal(1)
             // Get item from items mapping then check fields to ensure they are correct
             const item = await proxy.items(1);
+            const [_receiver, _royaltyAmount] = await ledaNft.royaltyInfo(item.itemId, price);
+            
             expect(item.itemId).to.equal(1)
             expect(item.nftAddress).to.equal(ledaNft.address)
             expect(item.tokenId).to.equal(1)
             expect(item.price).to.equal(price)
             expect(item.seller).to.equal(minterOne.address);
             expect(item.creator).to.equal(minterOne.address);
-            expect(item.creatorRoyaltiesPercentage).to.equal(creatorFeePercentage);
+            expect(item.creatorRoyalties).to.equal(_royaltyAmount);
             expect(item.status).to.equal(Listed);
         });
 
@@ -429,8 +433,6 @@ describe("Marketplace Contract Testing", () => {
             const newBalance = await owner.getBalance();
             expect(await owner.getBalance()).to.equal(initBalance.sub(gasPaid).add(firstSaleFees).add(secondSaleFees));
         }); 
-
-        
     });
     
     describe("Should fail if requirements are not fullfilled", () => { 
@@ -497,7 +499,7 @@ describe("Marketplace Contract Testing", () => {
             .to.be.revertedWith("Only owner can list its NFT!");
         });
 
-        it("should not be able to set a new item if getting royalties is not succesful!", async () => {
+        it("should not fail if the collection does not support royalties!", async () => {
             const {ledaNft, proxy, minterOne, minterTwo, buyerOne} = await loadFixture(marketplaceFixture);
 
             const LedaNFTTest = await ethers.getContractFactory("LedaNFTTest");
@@ -507,9 +509,21 @@ describe("Marketplace Contract Testing", () => {
             await ledaNftTest.connect(minterOne).mint(URI, creatorFeePercentage);
             expect(await ledaNftTest.totalSupply()).to.equal(1);     
 
-            await expect(proxy.connect(minterOne).makeItem(ledaNftTest.address, 1, price))
-            .to.be.revertedWith("Only owner can list its NFT!");
+            await ledaNftTest.connect(minterOne).setApprovalForAll(proxy.address, true);
 
+            await proxy.connect(minterOne).makeItem(ledaNftTest.address, 1, price);
+
+            const item = await proxy.items(1);
+            //const [_receiver, _royaltyAmount] = await ledaNftTest.royaltyInfo(item.itemId, price);
+            
+            expect(item.itemId).to.equal(1)
+            expect(item.nftAddress).to.equal(ledaNftTest.address)
+            expect(item.tokenId).to.equal(1)
+            expect(item.price).to.equal(price)
+            expect(item.seller).to.equal(minterOne.address);
+            expect(item.creator).to.equal(minterOne.address);
+            expect(item.creatorRoyalties).to.equal(0);
+            expect(item.status).to.equal(Listed);
         });
     });
     

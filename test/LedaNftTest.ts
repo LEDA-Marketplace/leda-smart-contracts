@@ -8,6 +8,7 @@ const feePercent = 1;
 const toWei = (num:number) => ethers.utils.parseEther(num.toString())
 const fromWei = (num:number) => ethers.utils.formatEther(num)
 const price = 1000;
+const feeDenominator = 1000;
 const creatorFeePercent = 25;
 
 async function ledaNftFixture() {
@@ -30,8 +31,6 @@ describe("LedaNFT Contract Testing", () => {
             const tx2 = await ledaNft.connect(owner).mint(URI, creatorFeePercent);
             const receipt = await tx2.wait();
 
-            //console.log("Owner: ", receipt.events[1].args._owner);
-            //console.log(receipt.events);
             expect(receipt.events[1].args._owner).to.equal(owner.address);
             expect(receipt.events[1].args._nftId).to.equal(2);
             expect(receipt.events[1].args._royalties).to.equal(creatorFeePercent);
@@ -99,16 +98,17 @@ describe("LedaNFT Contract Testing", () => {
             expect(await ledaNft.balanceOf(minterOne.address)).to.equal(1);
         });
 
-        it("should validad nft creator and royalties", async () => {
+        it("should validate nft creator and royalties", async () => {
             const {ledaNft, minterOne, owner, minterTwo} = await loadFixture(ledaNftFixture);
 
             await ledaNft.connect(minterOne).mint(URI, creatorFeePercent);
 
-            const [_creator, _royalties, _success] = await ledaNft.connect(minterOne).callStatic.getCreatorAndRoyalties(1);
+            const [_creator, _royalties] = await ledaNft.connect(minterOne).callStatic.royaltyInfo(1, price);
 
             expect(_creator).to.equal(minterOne.address);
-            expect(_royalties).to.equal(creatorFeePercent);
-            expect(_success).to.equal(true);
+            
+            const royalties = (price * creatorFeePercent) / feeDenominator;
+            expect(_royalties).to.equal(royalties);
         });
 
         it("should transfer an nft using transferFrom directly", async () => {
@@ -117,8 +117,14 @@ describe("LedaNFT Contract Testing", () => {
 
             await ledaNft.connect(minterOne).transferFrom(minterOne.address, buyerOne.address, 1);
             
-            expect(await ledaNft.ownerOf(1)).to.equal(buyerOne.address);
-            
+            expect(await ledaNft.ownerOf(1)).to.equal(buyerOne.address); 
+        });
+
+        it("should verify that the royalties system is in place", async () => {
+            const {ledaNft, minterOne, owner, minterTwo, buyerOne} = await loadFixture(ledaNftFixture);
+            const _INTERFACE_ID_ERC2981 = "0x2a55205a";
+            const success = await ledaNft.supportsInterface(_INTERFACE_ID_ERC2981);
+            expect(success).to.equal(true);
         });
 
         it("should approve someone else to transfer an NFT", async () => {
