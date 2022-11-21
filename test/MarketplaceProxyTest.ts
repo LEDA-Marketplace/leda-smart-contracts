@@ -4,8 +4,6 @@ import { Contract, BigNumber, utils} from "ethers";
 import { upgrades } from "hardhat"
 const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers");
 
-
-
 const URI:string = "sample URI";
 const marketplaceFeePercent = 30;
 const creatorFeePercentage = 25;
@@ -172,20 +170,24 @@ describe("Marketplace Contract Testing", () => {
                     minterOne.address,
                     minterOne.address
             )
+            //
             
+
             // Owner of NFT should now be the marketplace
             expect(await ledaNft.ownerOf(1)).to.equal(proxy.address);
             // Item count should now equal 1
             expect(await proxy.getItemsCount()).to.equal(1)
             // Get item from items mapping then check fields to ensure they are correct
             const item = await proxy.items(1);
+            const [_receiver, _royaltyAmount] = await ledaNft.royaltyInfo(item.itemId, price);
+            
             expect(item.itemId).to.equal(1)
             expect(item.nftAddress).to.equal(ledaNft.address)
             expect(item.tokenId).to.equal(1)
             expect(item.price).to.equal(price)
             expect(item.seller).to.equal(minterOne.address);
             expect(item.creator).to.equal(minterOne.address);
-            expect(item.creatorRoyaltiesPercentage).to.equal(creatorFeePercentage);
+            expect(item.creatorRoyalties).to.equal(_royaltyAmount);
             expect(item.status).to.equal(Listed);
         });
 
@@ -231,6 +233,25 @@ describe("Marketplace Contract Testing", () => {
             expect(await await proxy.getItemsCount()).to.equal(1);
             const item = await proxy.items(1);
             expect(item.price).to.equal(0);
+        });
+
+        it("should be able to list, delist and list again", async function () {
+            const {ledaNft, proxy, minterOne} = await loadFixture(mintNFTs);
+
+            await proxy.connect(minterOne).makeItem(ledaNft.address, 1, 100);
+            expect(await proxy.getItemsCount()).to.equal(1);
+
+            await proxy.connect(minterOne).changeItemStatus(1, Not_Listed);
+
+            const itemBefore = await proxy.items(1);
+            expect(itemBefore.status).to.equal(Not_Listed);
+            expect(itemBefore.price).to.equal(100);
+
+            await proxy.connect(minterOne).getListedAgain(1, 150);
+
+            const itemAfter = await proxy.items(1);
+            expect(itemAfter.status).to.equal(Listed);
+            expect(itemAfter.price).to.equal(150);
         });
     });
     
@@ -412,8 +433,6 @@ describe("Marketplace Contract Testing", () => {
             const newBalance = await owner.getBalance();
             expect(await owner.getBalance()).to.equal(initBalance.sub(gasPaid).add(firstSaleFees).add(secondSaleFees));
         }); 
-
-        
     });
     
     describe("Should fail if requirements are not fullfilled", () => { 
@@ -444,6 +463,67 @@ describe("Marketplace Contract Testing", () => {
             
             await expect(proxy.connect(minterOne).setListingFeesPercentage(newFeePercentage))
             .to.be.revertedWith("Ownable: caller is not the owner");
+        });
+
+        it("should not be able to set a new item if the collection address is equal to zero", async () => {
+            const {ledaNft, proxy, minterOne, buyerOne} = await loadFixture(marketplaceFixture);
+            await ledaNft.connect(minterOne).mint(URI, creatorFeePercentage);
+
+            const zeroAddress = "0x0000000000000000000000000000000000000000";
+            await ledaNft.connect(minterOne).setApprovalForAll(proxy.address, true);
+            
+            await expect(proxy.connect(minterOne).makeItem(zeroAddress, 1, price))
+            .to.be.revertedWith("Zero address is not allowed!");
+        });
+
+
+        it("should not be able to set a new item if nft does not exist!", async () => {
+            const {ledaNft, proxy, minterOne, buyerOne} = await loadFixture(marketplaceFixture);
+            await ledaNft.connect(minterOne).mint(URI, creatorFeePercentage);
+            expect(await ledaNft.totalSupply()).to.equal(1);
+
+            await ledaNft.connect(minterOne).setApprovalForAll(proxy.address, true);
+            
+            await expect(proxy.connect(minterOne).makeItem(ledaNft.address, 2, price))
+            .to.be.revertedWith("ERC721: invalid token ID");
+        });
+
+        it("should not allow to list an nft if you are not the owner!", async () => {
+            const {ledaNft, proxy, minterOne, minterTwo, buyerOne} = await loadFixture(marketplaceFixture);
+            await ledaNft.connect(minterOne).mint(URI, creatorFeePercentage);
+            expect(await ledaNft.totalSupply()).to.equal(1);
+
+            await ledaNft.connect(minterOne).setApprovalForAll(proxy.address, true);
+            
+            await expect(proxy.connect(minterTwo).makeItem(ledaNft.address, 1, price))
+            .to.be.revertedWith("Only owner can list its NFT!");
+        });
+
+        it("should not fail if the collection does not support royalties!", async () => {
+            const {ledaNft, proxy, minterOne, minterTwo, buyerOne} = await loadFixture(marketplaceFixture);
+
+            const LedaNFTTest = await ethers.getContractFactory("LedaNFTTest");
+            const ledaNftTest = await LedaNFTTest.deploy("LEDA NFT Collection", "LEDATest");
+            await ledaNftTest.deployed();
+
+            await ledaNftTest.connect(minterOne).mint(URI, creatorFeePercentage);
+            expect(await ledaNftTest.totalSupply()).to.equal(1);     
+
+            await ledaNftTest.connect(minterOne).setApprovalForAll(proxy.address, true);
+
+            await proxy.connect(minterOne).makeItem(ledaNftTest.address, 1, price);
+
+            const item = await proxy.items(1);
+            //const [_receiver, _royaltyAmount] = await ledaNftTest.royaltyInfo(item.itemId, price);
+            
+            expect(item.itemId).to.equal(1)
+            expect(item.nftAddress).to.equal(ledaNftTest.address)
+            expect(item.tokenId).to.equal(1)
+            expect(item.price).to.equal(price)
+            expect(item.seller).to.equal(minterOne.address);
+            expect(item.creator).to.equal(minterOne.address);
+            expect(item.creatorRoyalties).to.equal(0);
+            expect(item.status).to.equal(Listed);
         });
     });
     

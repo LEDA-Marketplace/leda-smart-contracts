@@ -2,25 +2,65 @@
   "manifestVersion": "3.2",
   "proxies": [
     {
-      "address": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
-      "txHash": "0xa83f87eb1b03221149b717038065a1ce504a21c0046cd86bfb43094d841fe012",
+      "address": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
+      "txHash": "0xff30cb67b87768205e21b13c5e823c14f281bbb1e98822cd735738a475868c2f",
+      "kind": "uups"
+    },
+    {
+      "address": "0x610178dA211FEF7D417bC0e6FeD39F05609AD788",
+      "txHash": "0xc3d24a324a63ecc4870d145d47e679b0c76994bfa0cad5a2d43a5d67cb12777e",
+      "kind": "uups"
+    },
+    {
+      "address": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
+      "txHash": "0xeece92d5e1c97efb244ef0ad9292b41d9465693b9628406530954c4c1b703554",
+      "kind": "uups"
+    },
+    {
+      "address": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+      "txHash": "0xa5d20037979ac2960f9f845f79211810df149f0254dce763136328fdbbca8f3a",
       "kind": "uups"
     },
     {
       "address": "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6",
-      "txHash": "0x089970fe32cb1caa824477ade9c3a94b95359e868e6716d7948151e01dd252c2",
+      "txHash": "0xa73de5a793505f29aa6e8b1f3f3ffda02652960934adf81ea1bdedf7682e03aa",
       "kind": "uups"
     },
     {
       "address": "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
-      "txHash": "0x42edb9038890fe4be3b5c065ef7cb56d5c85cb1e239b57fdbfa9165e8dbf087b",
+      "txHash": "0x83f48822ad3e107b719d85a18c4a85125b998ca79b8c5cbfa023f6ca1b51683d",
+      "kind": "uups"
+    },
+    {
+      "address": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+      "txHash": "0x22ca463e7e0a08a8a1f442c9c64f5d78493f20714b164f90045dd489bea9ad13",
+      "kind": "uups"
+    },
+    {
+      "address": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+      "txHash": "0x1d77092f58f20e343c37eca8c96ddd67541af7e55aca3b5cc862f0cfa5702c00",
+      "kind": "uups"
+    },
+    {
+      "address": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
+      "txHash": "0xe6bf77fef78383fc3c0181d60788b08fa716ee34c5f63223da7079876cfd96ab",
+      "kind": "uups"
+    },
+    {
+      "address": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
+      "txHash": "0x0c35ac9e5d17ab3cbcc1a369a8a012a6fe5ebd94f5b7191980980adf468ef8c5",
+      "kind": "uups"
+    },
+    {
+      "address": "0x9A676e781A523b5d0C0e43731313A708CB607508",
+      "txHash": "0x1e312eb2ea1ff04a31d1c339f2957c7f512eb2e744b2e69c9d1e6a2698456ab7",
       "kind": "uups"
     }
   ],
   "impls": {
-    "5cb1baca096f85821cd200b5cffbe9fc206ec7b1c311bd585d43a3f852852d3c": {
+    "92b144c51be378b219fc2146019aa93ac4ba16a83c0bb5c4b7c5076b48699d8c": {
       "address": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
-      "txHash": "0x1a530d6fb78cbc4020fa6cbd0a7435852713128d96293578a44b672bbe85781f",
+      "txHash": "0xb9304cc9475a2f4bc42e4644afc222f51d8e120dba5dd8392aa9d91b9d4c01b8",
       "layout": {
         "solcVersion": "0.8.16",
         "storage": [
@@ -127,7 +167,7 @@
             "slot": "351",
             "type": "t_struct(Counter)1465_storage",
             "contract": "Marketplace",
-            "src": "contracts/Marketplace.sol:25"
+            "src": "contracts/Marketplace.sol:35"
           },
           {
             "label": "itemsSold",
@@ -135,7 +175,7 @@
             "slot": "352",
             "type": "t_struct(Counter)1465_storage",
             "contract": "Marketplace",
-            "src": "contracts/Marketplace.sol:26"
+            "src": "contracts/Marketplace.sol:36"
           },
           {
             "label": "feePercentage",
@@ -143,7 +183,7 @@
             "slot": "353",
             "type": "t_uint256",
             "contract": "Marketplace",
-            "src": "contracts/Marketplace.sol:28"
+            "src": "contracts/Marketplace.sol:44"
           },
           {
             "label": "listingFeePercentage",
@@ -151,15 +191,15 @@
             "slot": "354",
             "type": "t_uint256",
             "contract": "Marketplace",
-            "src": "contracts/Marketplace.sol:29"
+            "src": "contracts/Marketplace.sol:45"
           },
           {
             "label": "items",
             "offset": 0,
             "slot": "355",
-            "type": "t_mapping(t_uint256,t_struct(Item)1674_storage)",
+            "type": "t_mapping(t_uint256,t_struct(Item)4364_storage)",
             "contract": "Marketplace",
-            "src": "contracts/Marketplace.sol:53"
+            "src": "contracts/Marketplace.sol:66"
           }
         ],
         "types": {
@@ -183,7 +223,7 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_enum(item_status)1656": {
+          "t_enum(item_status)4346": {
             "label": "enum Marketplace.item_status",
             "members": [
               "Not_Listed",
@@ -192,7 +232,7 @@
             ],
             "numberOfBytes": "1"
           },
-          "t_mapping(t_uint256,t_struct(Item)1674_storage)": {
+          "t_mapping(t_uint256,t_struct(Item)4364_storage)": {
             "label": "mapping(uint256 => struct Marketplace.Item)",
             "numberOfBytes": "32"
           },
@@ -208,7 +248,7 @@
             ],
             "numberOfBytes": "32"
           },
-          "t_struct(Item)1674_storage": {
+          "t_struct(Item)4364_storage": {
             "label": "struct Marketplace.Item",
             "members": [
               {
@@ -248,14 +288,14 @@
                 "slot": "5"
               },
               {
-                "label": "creatorRoyaltiesPercentage",
+                "label": "creatorRoyalties",
                 "type": "t_uint256",
                 "offset": 0,
                 "slot": "6"
               },
               {
                 "label": "status",
-                "type": "t_enum(item_status)1656",
+                "type": "t_enum(item_status)4346",
                 "offset": 0,
                 "slot": "7"
               }
@@ -273,9 +313,9 @@
         }
       }
     },
-    "0f8e5e1d9c58fe625d6ffbf8ff98a4a17e93617919aa996210995473c4c0664d": {
-      "address": "0x610178dA211FEF7D417bC0e6FeD39F05609AD788",
-      "txHash": "0x0a25c4825ecb0d0084da5797b9bce89befbe7c66964b1ba26f3b7562e7d63e6c",
+    "81a5efacb742f27b1614135aa7efd8eacb908cac5a7bf75dea9bd51e130b5922": {
+      "address": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
+      "txHash": "0xef4b18daa13d09f5fc7ca63191960647c8950080b6514036ebb16f4ecbf4e6ae",
       "layout": {
         "solcVersion": "0.8.16",
         "storage": [
@@ -382,7 +422,7 @@
             "slot": "351",
             "type": "t_struct(Counter)1465_storage",
             "contract": "Marketplace",
-            "src": "contracts/Marketplace.sol:25"
+            "src": "contracts/Marketplace.sol:35"
           },
           {
             "label": "itemsSold",
@@ -390,7 +430,7 @@
             "slot": "352",
             "type": "t_struct(Counter)1465_storage",
             "contract": "Marketplace",
-            "src": "contracts/Marketplace.sol:26"
+            "src": "contracts/Marketplace.sol:36"
           },
           {
             "label": "feePercentage",
@@ -398,7 +438,7 @@
             "slot": "353",
             "type": "t_uint256",
             "contract": "Marketplace",
-            "src": "contracts/Marketplace.sol:28"
+            "src": "contracts/Marketplace.sol:44"
           },
           {
             "label": "listingFeePercentage",
@@ -406,15 +446,15 @@
             "slot": "354",
             "type": "t_uint256",
             "contract": "Marketplace",
-            "src": "contracts/Marketplace.sol:29"
+            "src": "contracts/Marketplace.sol:45"
           },
           {
             "label": "items",
             "offset": 0,
             "slot": "355",
-            "type": "t_mapping(t_uint256,t_struct(Item)1674_storage)",
+            "type": "t_mapping(t_uint256,t_struct(Item)4364_storage)",
             "contract": "Marketplace",
-            "src": "contracts/Marketplace.sol:53"
+            "src": "contracts/Marketplace.sol:66"
           }
         ],
         "types": {
@@ -438,7 +478,7 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_enum(item_status)1656": {
+          "t_enum(item_status)4346": {
             "label": "enum Marketplace.item_status",
             "members": [
               "Not_Listed",
@@ -447,7 +487,7 @@
             ],
             "numberOfBytes": "1"
           },
-          "t_mapping(t_uint256,t_struct(Item)1674_storage)": {
+          "t_mapping(t_uint256,t_struct(Item)4364_storage)": {
             "label": "mapping(uint256 => struct Marketplace.Item)",
             "numberOfBytes": "32"
           },
@@ -463,7 +503,7 @@
             ],
             "numberOfBytes": "32"
           },
-          "t_struct(Item)1674_storage": {
+          "t_struct(Item)4364_storage": {
             "label": "struct Marketplace.Item",
             "members": [
               {
@@ -503,14 +543,14 @@
                 "slot": "5"
               },
               {
-                "label": "creatorRoyaltiesPercentage",
+                "label": "creatorRoyalties",
                 "type": "t_uint256",
                 "offset": 0,
                 "slot": "6"
               },
               {
                 "label": "status",
-                "type": "t_enum(item_status)1656",
+                "type": "t_enum(item_status)4346",
                 "offset": 0,
                 "slot": "7"
               }

@@ -8,36 +8,45 @@ import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
-contract ApesNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Ownable {
+contract JupApesNFT is ERC721, 
+        ERC721Enumerable, 
+        ERC721URIStorage, 
+        Pausable, 
+        Ownable
+{
     using Counters for Counters.Counter;
     Counters.Counter private tokenCount;
-    uint public constant MAX_ROYALTIES_PERCENTAGE = 10;
+    // This means that the maximun amount is 10%
+    uint public constant MAX_ROYALTIES_PERCENTAGE = 100;
+    uint public constant CAP_VALUE = 10000;
 
-    struct Attributes {
-        uint idAttribute;
-        uint value;
-    }
-
-    Attributes[] temp;
     uint public royaltyPercentage;
 
-    mapping(uint => Attributes[]) public onChainData;
-    
     event LogNFTMinted(
         uint _nftId,
         address _owner,
         string _nftURI
     );
 
+    struct CreatorInfo {
+        address creator;
+        uint royalties;
+    }
+    
+    mapping(uint => CreatorInfo) public creatorInfo;
+
     modifier onlyValidRoyalty(uint _royaltyPercentage) {
         require(_royaltyPercentage <= MAX_ROYALTIES_PERCENTAGE, "Royalties percentage should be equal or lesss than 10%");
         _;
     }
 
-    constructor(string memory _name, string memory _symbol, uint _royaltyPercentage) ERC721(_name, _symbol)
+    constructor(
+        string memory name, 
+        string memory symbol, 
+        uint _royaltyPercentage) 
+        ERC721(name, symbol)
         onlyValidRoyalty(_royaltyPercentage)
     {
-        
         royaltyPercentage = _royaltyPercentage;
     }
 
@@ -57,42 +66,31 @@ contract ApesNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Ownabl
         _unpause();
     }
 
+    mapping(uint => uint) public nftRewards;
+
     function mint(
-            string memory _tokenURI, 
-            Attributes[] memory _attributes
+            address _to,
+            string memory _tokenURI,
+            uint percentageRewards
         )
         external
         whenNotPaused
         onlyOwner
         returns(uint) 
     {
-        require(tokenCount.current() < 10000, "NFTs are capped to 10,000!");
+        require(tokenCount.current() < CAP_VALUE, "NFTs are capped to 10,000!");
+        require(_to != address(0), "Receiver can't be the zero address");
         
         tokenCount.increment();
-        uint itemId = tokenCount.current();
-        
-        _safeMint(msg.sender, itemId);
-        _setTokenURI(itemId, _tokenURI);
+        uint tokenId = tokenCount.current();
+        nftRewards[tokenId] = percentageRewards;
 
-        uint totalAttributes = _attributes.length;
-                
-        for(uint i=0; i < totalAttributes; i++) {
-            temp.push(Attributes(_attributes[i].idAttribute, _attributes[i].value));
-        }
-        
-        onChainData[itemId] = temp;
-        delete temp;
-        emit LogNFTMinted(tokenCount.current(), msg.sender, _tokenURI);
-        
-        return(itemId);
-    }
+        emit LogNFTMinted(tokenId, msg.sender, _tokenURI);
 
-    function getApeAttributes(uint _nftId)
-        external
-        view
-        returns (Attributes[] memory)
-    {
-        return onChainData[_nftId];
+        _safeMint(_to, tokenId);
+        _setTokenURI(tokenId, _tokenURI);
+               
+        return(tokenId);
     }
 
     function getCurrentTokenId() view external returns (uint) {
@@ -108,7 +106,6 @@ contract ApesNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Ownabl
     }
 
     // The following functions are overrides required by Solidity.
-
     function _burn(uint256 tokenId) internal override(ERC721, ERC721URIStorage) {
         super._burn(tokenId);
     }
@@ -130,10 +127,5 @@ contract ApesNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Ownabl
     {
         return super.supportsInterface(interfaceId);
     }
-    event LogGetCreator(uint _idNFT, address _owner);
-
-    function getCreator(uint idNFT) external returns (address) {
-        emit LogGetCreator(idNFT, owner());
-        return owner();
-    }
+    
 }

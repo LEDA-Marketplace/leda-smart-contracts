@@ -10,8 +10,18 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol"
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol";
 
-interface IGetCreatorAndRoyalties{
-    function getCreatorAndRoyalties(uint idNFT) external returns (address, uint);
+interface IERC165 {
+    function supportsInterface(bytes4 interfaceID) external view returns (bool);
+}
+
+interface IERC2981 is IERC165 {
+    function royaltyInfo(
+        uint256 _tokenId,
+        uint256 _salePrice
+    ) external view returns (
+        address receiver,
+        uint256 royaltyAmount
+    );
 }
 
 contract Marketplace is 
@@ -25,12 +35,15 @@ contract Marketplace is
     CountersUpgradeable.Counter private itemsCount;
     CountersUpgradeable.Counter private itemsSold;
 
-    uint public feePercentage; // the fee percentage on sales
-    uint public listingFeePercentage;
     // Royalties should be received as an integer number
     // i.e., if royalties are 2.5% this contract should receive 25
     uint constant TO_PERCENTAGE = 1000;
+    bytes4 private constant _INTERFACE_ID_ERC2981 = 0x2a55205a;
 
+    // Percentage fee on sales
+    uint public feePercentage; 
+    uint public listingFeePercentage;
+    
     enum item_status
     {
       Not_Listed,
@@ -45,7 +58,7 @@ contract Marketplace is
         uint price;
         address payable seller;
         address payable creator;
-        uint creatorRoyaltiesPercentage;
+        uint creatorRoyalties;
         item_status status;
     }
 
@@ -130,15 +143,29 @@ contract Marketplace is
         payable
         returns(uint)
     {
-        uint listingFeesAmount = getListingFees(_price);
-        require(listingFeesAmount <= msg.value, "Should pay listing fees!");
+        require(_nft != address(0), "Zero address is not allowed!");
+        require(_tokenId > 0, "Token id should be greater than zero!");
+        require(
+            IERC721Upgradeable(_nft).ownerOf(_tokenId) == msg.sender, 
+            "Only owner can list its NFT!"
+        );
+        require(
+            getListingFees(_price) <= msg.value, 
+            "Should pay listing fees!"
+        );
+        
         // increment itemCount
         itemsCount.increment();
         uint itemId = itemsCount.current();
         
-        (address _creator, uint _creatorRoyaltiesPercentage) = 
-                    IGetCreatorAndRoyalties(_nft).getCreatorAndRoyalties(_tokenId);
+        address _creator;
+        uint _creatorRoyalties;
 
+        if(checkRoyalties(_nft))
+            (_creator, _creatorRoyalties) = IERC2981(_nft).royaltyInfo(_tokenId, _price);
+        else
+            _creator = msg.sender;
+        
         // add new item to items mapping
         items[itemId] = Item(
             itemId,
@@ -147,7 +174,7 @@ contract Marketplace is
             _price,
             payable(msg.sender),
             payable(_creator),
-            _creatorRoyaltiesPercentage,
+            _creatorRoyalties,
             item_status.Listed
         );
         // emit Offered event
@@ -165,12 +192,29 @@ contract Marketplace is
 
         return itemsCount.current();
     }
+
+    function checkRoyalties(address _contract) 
+        internal 
+        view
+        returns (bool) 
+    {
+        (bool success) = IERC165(_contract).supportsInterface(_INTERFACE_ID_ERC2981);
+        return success;
+    }
     
     // This function is required by the OpenZeppelin module.
     function _authorizeUpgrade(address) internal override onlyOwner {}
 
-    function changeItemStatus(uint _itemId, item_status _newStatus)
+    function getListedAgain(uint _itemId, uint _newPrice)
         external
+    {
+        require(changeItemPrice(_itemId, _newPrice), "Set new price failed!");
+        require(changeItemStatus(_itemId, item_status.Listed), "Set new item status failed!");
+    }
+
+    function changeItemStatus(uint _itemId, item_status _newStatus)
+        public
+        returns(bool)
     {
         Item storage item = items[_itemId];
         require(item.seller == msg.sender, "only seller can change status!");
@@ -178,17 +222,23 @@ contract Marketplace is
         require(item.status != item_status.Sold, "item already sold!");
         item.status = _newStatus;
         emit LogChangeStatus(_itemId, msg.sender, _newStatus);
+
+        return true;
     }
 
     function changeItemPrice(uint _itemId, uint _newPrice)
-        external
+        internal
+        returns(bool)
     {
         Item storage item = items[_itemId];
         require(item.seller == msg.sender, "only seller can change status!");
         require(item.status != item_status.Sold, "item already sold!");
-        require(item.status == item_status.Not_Listed, "item should be listed");
+        require(item.status == item_status.Not_Listed, "item should not be listed");
+
         item.price = _newPrice;
         emit LogChangePrice(_itemId, msg.sender, _newPrice);
+
+        return true;
     }
 
     function getContractBalance()
@@ -219,16 +269,14 @@ contract Marketplace is
         require(msg.value >= item.price, "not enough ether to cover item price and market fee");
         require(item.status == item_status.Listed, "item should be listed");
 
-        (uint sellerAmount, uint creatorAmount) 
-            = getRoyalties(_itemId, item.creatorRoyaltiesPercentage);
+        uint profits = getProfits(_itemId, item.creatorRoyalties);
         // pay seller and feeAccount
-        (item.creator).transfer(creatorAmount);
-        (item.seller).transfer(sellerAmount);
+        (item.creator).transfer(item.creatorRoyalties);
+        (item.seller).transfer(profits);
         
         // update item to sold
         item.status =  item_status.Sold;
         
-
         // increase counter
         itemsSold.increment();
 
@@ -263,16 +311,15 @@ contract Marketplace is
         return itemsCount.current();
     }
 
-    function getRoyalties(uint _itemId, uint _creatorRoyaltiesPercentage) 
+    function getProfits(uint _itemId, uint _creatorRoyalties)
         view 
-        private 
-        returns(uint _sellerAmount, uint _creatorAmount)
+        internal
+        returns(uint _sellerAmount)
     {
         uint _platformFees;
         uint _price = items[_itemId].price;
         
-        _creatorAmount = (_price * _creatorRoyaltiesPercentage)/TO_PERCENTAGE; 
-        _platformFees = (_price * feePercentage)/TO_PERCENTAGE;
-        _sellerAmount = _price - _platformFees - _creatorAmount;
+        _platformFees = (_price * feePercentage) / TO_PERCENTAGE;
+        _sellerAmount = _price - (_platformFees + _creatorRoyalties);
     }
 }
