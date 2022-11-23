@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { ethers} from "hardhat";
-import { Contract, BigNumber, utils} from "ethers";
+//import { Contract, BigNumber, utils} from "ethers";
 const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers");
 
 const URI:string = "sample URI";
