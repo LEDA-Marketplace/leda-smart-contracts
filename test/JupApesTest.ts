@@ -49,7 +49,6 @@ describe("JupApes Contract Testing", () => {
 
             const lazyMinter = new LazyMinter( jupApes, minter );
             const voucher = await lazyMinter.createVoucher(1, "ipfs://bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi");
-            console.log(voucher);
             
             await expect(redeemerContract.redeem(buyer.address, voucher))
             .to.emit(jupApes, 'Transfer')  // transfer from null address to minter

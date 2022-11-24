@@ -4,6 +4,7 @@ pragma solidity 0.8.16;
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -20,7 +21,8 @@ contract LedaNFT is
         EIP712,
         ReentrancyGuard, 
         ERC721Enumerable, 
-        ERC721URIStorage, 
+        ERC721URIStorage,
+        ERC721Burnable,
         Pausable, 
         Ownable
     {
@@ -33,7 +35,7 @@ contract LedaNFT is
         bytes signature;
     }
 
-    mapping(bytes => bool) private signatures;
+    mapping(bytes32 => bool) private signatures;
 
     using Counters for Counters.Counter;
     Counters.Counter public tokenCount;
@@ -79,7 +81,7 @@ contract LedaNFT is
         public 
         returns(uint) 
     {
-        require(
+        /*require(
             _royaltiesPercentage <= maxCreatorRoyalties, 
             "Royalties percentage exceeds the maximum value!"
         );
@@ -89,7 +91,14 @@ contract LedaNFT is
 
         _setTokenRoyalty(tokenId, msg.sender, _royaltiesPercentage);
         _safeMint(msg.sender, tokenId);
-        _setTokenURI(tokenId, _tokenURI);
+        _setTokenURI(tokenId, _tokenURI);*/
+        (bool success, uint tokenId) = 
+            mintNFT(msg.sender, _tokenURI, _royaltiesPercentage);
+
+        require(
+            success,
+            "Minting failed!"
+        );
         
         emit LogNFTMinted(tokenId, msg.sender, _tokenURI, _royaltiesPercentage);
 
@@ -123,7 +132,7 @@ contract LedaNFT is
         returns (uint256) 
     {
         require(
-            !signatures[voucher.signature], 
+            !signatures[keccak256(voucher.signature)], 
             "The voucher has been redeemed!"
         );
 
@@ -139,7 +148,7 @@ contract LedaNFT is
             "Signature invalid or unauthorized"
         );
 
-        signatures[voucher.signature] = true;
+        signatures[keccak256(voucher.signature)] = true;
         (bool success, uint tokenId) = 
             mintNFT(signer, voucher.uri, voucher.royalties);
 
@@ -147,7 +156,7 @@ contract LedaNFT is
             success,
             "Lazy minting failed!"
         );
-        _transfer(signer, redeemer, tokenId);
+        _safeTransfer(signer, redeemer, tokenId, "");
    
         uint profits = getProfits(msg.value);
         payable(signer).transfer(profits);
@@ -166,12 +175,12 @@ contract LedaNFT is
     function getProfits(uint _receivedAmount)
         view 
         internal
-        returns(uint _sellerAmount)
+        returns(uint)
     {
         uint _platformFees;
         
         _platformFees = (_receivedAmount * lazyMintingFee) / TO_PERCENTAGE;
-        _sellerAmount = _receivedAmount - _platformFees;
+        return _receivedAmount - _platformFees;
     }
 
     function _verify(NFTVoucher calldata voucher) 
@@ -247,7 +256,7 @@ contract LedaNFT is
 
     // The following functions are overrides required by Solidity.
     function _burn(uint256 tokenId) 
-        internal 
+        internal
         override(ERC721, ERC721URIStorage) 
     {
         super._burn(tokenId);

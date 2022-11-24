@@ -146,5 +146,18 @@ describe("LedaNFT Contract Testing", () => {
             
             expect(await ledaNft.ownerOf(1)).to.equal(buyerOne.address);
         });
+
+        it("should be able to burn an NFT", async () => {
+            const {ledaNft, minterOne, owner, minterTwo, buyerOne} = await loadFixture(ledaNftFixture);
+            await ledaNft.connect(minterOne).mint(URI, creatorFeePercent);
+            
+            expect(await ledaNft.ownerOf(1)).to.equal(minterOne.address);
+
+            expect(await ledaNft.tokenCount()).to.equal(1);
+
+            await ledaNft.connect(minterOne).burn(1);
+            await expect(ledaNft.ownerOf(1))
+                .to.be.revertedWith("ERC721: invalid token ID");            
+        })
     });
 });
