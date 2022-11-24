@@ -202,9 +202,6 @@ contract Marketplace is
         return success;
     }
     
-    // This function is required by the OpenZeppelin module.
-    function _authorizeUpgrade(address) internal override onlyOwner {}
-
     function getListedAgain(uint _itemId, uint _newPrice)
         external
     {
@@ -322,4 +319,8 @@ contract Marketplace is
         _platformFees = (_price * feePercentage) / TO_PERCENTAGE;
         _sellerAmount = _price - (_platformFees + _creatorRoyalties);
     }
+
+    // This function is required by the OpenZeppelin module.
+    function _authorizeUpgrade(address) internal override onlyOwner {}
+
 }

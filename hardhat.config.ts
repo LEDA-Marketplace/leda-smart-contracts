@@ -2,6 +2,7 @@ import { HardhatUserConfig } from "hardhat/config";
 import '@openzeppelin/hardhat-upgrades';
 import "@nomicfoundation/hardhat-toolbox";
 import "@nomiclabs/hardhat-etherscan";
+import "@nomiclabs/hardhat-ethers";
 import { ethers } from "hardhat"
 
 require("dotenv").config();
@@ -11,7 +12,7 @@ const { GOERLI_URL, PRIVATE_KEY } = process.env;
 const PRIVATE = PRIVATE_KEY;
 const config: HardhatUserConfig = {
   solidity: "0.8.16",
-  
+  defaultNetwork: "hardhat",
   networks: {
     hardhat: {
       chainId: 1337 // We set 1337 to make interacting with MetaMask simpler
