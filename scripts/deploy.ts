@@ -8,8 +8,8 @@ async function main() {
 
   // Get the ContractFactories and Signers here.
   //const ApesNFT = await ethers.getContractFactory("ApesNFT");
-  const Marketplace = await ethers.getContractFactory("Marketplace");
-  const marketplaceFee = 50;
+  /*const Marketplace = await ethers.getContractFactory("Marketplace");
+  const marketplaceFee = 50;*/
   
   const LedaNFT = await ethers.getContractFactory("LedaNFT");
   // deploy contracts

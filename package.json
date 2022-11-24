@@ -11,6 +11,7 @@
     "test:proxy": "hardhat test test/MarketplaceProxyTest.ts --network localhost",
     "test:LedaNft": "hardhat test test/LedaNftTest.ts",
     "test:JupApes": "hardhat test test/JupApesTest.ts",
+    "test:LazyLeda": "hardhat test test/LazyLedaTest.ts",
     "test:upgrade": "hardhat test test/MarketplaceUpgradeTest.ts --network localhost",
     "test": "hardhat test"
   },

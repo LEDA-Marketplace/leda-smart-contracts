@@ -30,6 +30,7 @@ contract JupApesNFT is
     }
 
     mapping(uint => uint) public stakingRewardsPercentage;
+    mapping (address => uint256) pendingWithdrawals;
     
     // This means that the maximun amount is 10%
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
@@ -85,10 +86,7 @@ contract JupApesNFT is
         onlyOwner
         returns(uint) 
     {
-        /*require(
-            tokenCount.current() < CAP_VALUE, 
-            "NFTs are capped to 10,000!"
-        );*/
+
         require(
             tokenCount < CAP_VALUE, 
             "NFTs are capped to 10,000!"
@@ -122,27 +120,35 @@ contract JupApesNFT is
         return(tokenId);
     }
 
-    function redeem(address redeemer, NFTVoucher calldata voucher) public payable returns (uint256) {
+    function redeem(address redeemer, NFTVoucher calldata voucher) 
+        public 
+        payable 
+        returns (uint256) 
+    {
         address signer = _verify(voucher);
 
         require(hasRole(MINTER_ROLE, signer), "Signature invalid or unauthorized");
 
         require(msg.value >= voucher.minPrice, "Insufficient funds to redeem");
 
+        tokenCount++;
         //add royalties
         _safeMint(signer, voucher.tokenId);
         _setTokenURI(voucher.tokenId, voucher.uri);
-        // verify this second transfer
         _transfer(signer, redeemer, voucher.tokenId);
 
-        //pendingWithdrawals[signer] += msg.value;
+        pendingWithdrawals[signer] += msg.value;
 
         return voucher.tokenId;
     }
 
     /// @notice Returns a hash of the given NFTVoucher, prepared using EIP712 typed data hashing rules.
     /// @param voucher An NFTVoucher to hash.
-    function _hash(NFTVoucher calldata voucher) internal view returns (bytes32) {
+    function _hash(NFTVoucher calldata voucher) 
+        internal 
+        view 
+        returns (bytes32) 
+    {
         return _hashTypedDataV4(keccak256(abi.encode(
             keccak256("NFTVoucher(uint256 tokenId,uint256 minPrice,string uri)"),
             voucher.tokenId,
@@ -160,26 +166,14 @@ contract JupApesNFT is
         return id;
     }
 
-    function _verify(NFTVoucher calldata voucher) internal view returns (address) {
+    function _verify(NFTVoucher calldata voucher) 
+        internal 
+        view 
+        returns (address) 
+    {
         bytes32 digest = _hash(voucher);
         return ECDSA.recover(digest, voucher.signature);
     }
-
-    /*function getCurrentTokenId() 
-        view 
-        external 
-        returns (uint) 
-    {
-        return tokenCount.current();
-    }*/
-
-    /*function _beforeTokenTransfer(address from, address to, uint256 tokenId)
-        internal
-        whenNotPaused
-        override(ERC721)
-    {
-        super._beforeTokenTransfer(from, to, tokenId);
-    } */
 
     // The following functions are overrides required by Solidity.
     function _burn(uint256 tokenId)
@@ -207,11 +201,12 @@ contract JupApesNFT is
         return super.supportsInterface(interfaceId) || AccessControl.supportsInterface(interfaceId);
     }
 
-    /*function supportsInterface(bytes4 interfaceId) public view virtual override (AccessControl, ERC721) returns (bool) {
-        return ERC721.supportsInterface(interfaceId) || AccessControl.supportsInterface(interfaceId);
-    }*/
-
-    function _feeDenominator() internal pure override returns (uint96) {
+    function _feeDenominator() 
+        internal 
+        pure 
+        override 
+        returns (uint96) 
+    {
         return 1000;
     }
 }
