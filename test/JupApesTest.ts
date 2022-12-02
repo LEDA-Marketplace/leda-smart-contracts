@@ -34,7 +34,7 @@ async function deploy() {
 }
 
 describe("JupApes Contract Testing", () => { 
-    describe("LazyNFT", function() {
+    describe("Lazy JupApes NFT", function() {
         it("Should deploy", async function() {
             const signers = await ethers.getSigners();
             const minter = signers[0].address;

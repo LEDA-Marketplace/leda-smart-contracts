@@ -35,7 +35,7 @@ async function deploy() {
     return { minter, buyer, seller, ledaNft, redeemerContract }
 }
 
-describe("JupApes Contract Testing", () => { 
+describe("LedaNFT Contract Testing", () => { 
     describe("LazyNFT", function() {
         it("Should deploy", async function() {
             const signers = await ethers.getSigners();
@@ -328,7 +328,7 @@ describe("JupApes Contract Testing", () => {
             expect(await ledaNft.getContractBalance()).to.equal(0);
             expect(await ledaNft.totalSupply()).to.equal(3);
 
-            console.log(await ledaNft.getChainID());
+            //console.log(await ledaNft.getChainID());
         });
     });
 });
