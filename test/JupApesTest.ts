@@ -4,8 +4,8 @@ import { Contract, BigNumber, utils} from "ethers";
 const { LazyMinter } = require('../lib')
 const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers");
 
-const URI:string = "sample URI";
-const feePercent = 1;
+const ipfs = "ipfs://bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi";
+const zeroAddress = "0x0000000000000000000000000000000000000000";
 const toWei = (num:number) => ethers.utils.parseEther(num.toString())
 const fromWei = (num:number) => ethers.utils.formatEther(num)
 
@@ -48,11 +48,11 @@ describe("JupApes Contract Testing", () => {
             const { jupApes, redeemerContract, buyer, minter} = await loadFixture(deploy);
 
             const lazyMinter = new LazyMinter( jupApes, minter );
-            const voucher = await lazyMinter.createVoucher(1, "ipfs://bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi");
+            const voucher = await lazyMinter.createVoucher(1,ipfs);
             
             await expect(redeemerContract.redeem(buyer.address, voucher))
             .to.emit(jupApes, 'Transfer')  // transfer from null address to minter
-            .withArgs('0x0000000000000000000000000000000000000000', minter.address, voucher.tokenId)
+            .withArgs(zeroAddress, minter.address, voucher.tokenId)
             .and.to.emit(jupApes, 'Transfer') // transfer from minter to redeemer
             .withArgs(minter.address, buyer.address, voucher.tokenId);
 
@@ -64,11 +64,11 @@ describe("JupApes Contract Testing", () => {
             const { jupApes, redeemerContract, buyer, minter} = await loadFixture(deploy);
 
             const lazyMinter = new LazyMinter(jupApes, minter );
-            const voucher = await lazyMinter.createVoucher(1, "ipfs://bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi");
+            const voucher = await lazyMinter.createVoucher(1, ipfs);
 
             await expect(redeemerContract.redeem(buyer.address, voucher))
                 .to.emit(jupApes, 'Transfer')  // transfer from null address to minter
-                .withArgs('0x0000000000000000000000000000000000000000', minter.address, voucher.tokenId)
+                .withArgs(zeroAddress, minter.address, voucher.tokenId)
                 .and.to.emit(jupApes, 'Transfer') // transfer from minter to redeemer
                 .withArgs(minter.address, buyer.address, voucher.tokenId);
 
@@ -83,7 +83,7 @@ describe("JupApes Contract Testing", () => {
             const rando = signers[signers.length-1];
     
             const lazyMinter = new LazyMinter(jupApes, rando);
-            const voucher = await lazyMinter.createVoucher(1, "ipfs://bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi");
+            const voucher = await lazyMinter.createVoucher(1, ipfs);
 
             await expect(redeemerContract.redeem(buyer.address, voucher))
                 .to.be.revertedWith('Signature invalid or unauthorized');
@@ -96,7 +96,7 @@ describe("JupApes Contract Testing", () => {
             const rando = signers[signers.length-1];
             
             const lazyMinter = new LazyMinter( jupApes, rando );
-            const voucher = await lazyMinter.createVoucher(1, "ipfs://bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi");
+            const voucher = await lazyMinter.createVoucher(1, ipfs);
             voucher.tokenId = 2;
             await expect(redeemerContract.redeem(buyer.address, voucher))
             .to.be.revertedWith('Signature invalid or unauthorized');
@@ -109,7 +109,7 @@ describe("JupApes Contract Testing", () => {
             const rando = signers[signers.length-1];
             
             const lazyMinter = new LazyMinter( jupApes, rando );
-            const voucher = await lazyMinter.createVoucher(1, "ipfs://bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi");
+            const voucher = await lazyMinter.createVoucher(1, ipfs);
 
             const dummyData = ethers.utils.randomBytes(128)
             voucher.signature = await minter.signMessage(dummyData);
@@ -123,7 +123,7 @@ describe("JupApes Contract Testing", () => {
 
             const lazyMinter = new LazyMinter( jupApes, minter );
             const minPrice = ethers.constants.WeiPerEther; // charge 1 Eth
-            const voucher = await lazyMinter.createVoucher(1, "ipfs://bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi", minPrice);
+            const voucher = await lazyMinter.createVoucher(1, ipfs, minPrice);
 
             await expect(redeemerContract.redeem(buyer.address, voucher, { value: minPrice }))
             .to.emit(jupApes, 'Transfer')  // transfer from null address to minter
@@ -139,7 +139,7 @@ describe("JupApes Contract Testing", () => {
             const minPrice = ethers.constants.WeiPerEther // charge 1 Eth
             const voucher = await lazyMinter.createVoucher(
                 1, 
-                "ipfs://bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi", 
+                ipfs, 
                 minPrice
             );
 
@@ -148,59 +148,4 @@ describe("JupApes Contract Testing", () => {
             .to.be.revertedWith('Insufficient funds to redeem')
         });
     });
-
-    describe("Minting NFTs", function () {
-       /* it("should be able to mint an Ape NFT", async () => {
-            const {apesNft, owner, minterOne, minterTwo, buyer, seller, buyerTwo} = await loadFixture(marketplaceFixture);
- 
-            const tx1 = await apesNft.connect(owner).mint(owner.address, URI, 50);
-            const tx2 = await apesNft.connect(owner).mint(owner.address, URI, 50);
-            const receipt = await tx2.wait();
-            const [events] = receipt.events;
-     
-                console.log("id:", events.args);
-                console.log("id:", events.args.tokenId);
-         
-            expect(await apesNft.balanceOf(owner.address)).to.equal(2);
-            expect(await apesNft.getCurrentTokenId()).to.equal(2);
-            expect(await apesNft.ownerOf(1)).to.equal(owner.address);
-            expect(await apesNft.tokenURI(1)).to.equal(URI);
-
-            //const attributes = await apesNft.getApeAttributes(1);
-
-            //console.log("Attributes: ", attributes);
-        });*/
-
-        /*it("should track each minted NFT", async () => {
-            const {nft, minterOne, minterTwo} = await loadFixture(marketplaceFixture);
-
-            // minterOne mints an nft
-            await expect(nft.connect(minterOne).mint(URI))
-            .to.emit(nft, "LogNFTMinted")
-                .withArgs(
-                1,
-                minterOne.address,
-                URI
-            );
-
-            expect(await nft.tokenCount()).to.equal(1);
-            expect(await nft.balanceOf(minterOne.address)).to.equal(1);
-            expect(await nft.tokenURI(1)).to.equal(URI);
-
-            // minterTwo mints an nft
-            await expect(nft.connect(minterTwo).mint(URI))
-            .to.emit(nft, "LogNFTMinted")
-                .withArgs(
-                2,
-                minterTwo.address,
-                URI
-            );
-            expect(await nft.tokenCount()).to.equal(2);
-            expect(await nft.balanceOf(minterTwo.address)).to.equal(1);
-            expect(await nft.tokenURI(2)).to.equal(URI);
-        });*/
-
-    });
-
-    
 });
