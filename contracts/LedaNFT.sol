@@ -78,20 +78,10 @@ contract LedaNFT is
     function mint(string memory _tokenURI, uint96 _royaltiesPercentage)
         whenNotPaused
         nonReentrant
-        public 
+        external 
         returns(uint) 
     {
-        /*require(
-            _royaltiesPercentage <= maxCreatorRoyalties, 
-            "Royalties percentage exceeds the maximum value!"
-        );
-
-        tokenCount.increment();
-        uint tokenId = tokenCount.current();
-
-        _setTokenRoyalty(tokenId, msg.sender, _royaltiesPercentage);
-        _safeMint(msg.sender, tokenId);
-        _setTokenURI(tokenId, _tokenURI);*/
+      
         (bool success, uint tokenId) = 
             mintNFT(msg.sender, _tokenURI, _royaltiesPercentage);
 
@@ -105,7 +95,11 @@ contract LedaNFT is
         return(tokenId);
     }
 
-    function mintNFT(address _newOwner, string memory _tokenURI, uint96 _royaltiesPercentage) 
+    function mintNFT(
+            address _newOwner, 
+            string memory _tokenURI, 
+            uint96 _royaltiesPercentage
+        ) 
         private
         returns (bool, uint)
     {
@@ -126,7 +120,7 @@ contract LedaNFT is
 
     // Add Lazy Minting Feature
     function redeem(address redeemer, NFTVoucher calldata voucher)
-        public
+        external
         payable
         nonReentrant
         returns (uint256) 
@@ -223,9 +217,6 @@ contract LedaNFT is
         payable(owner()).transfer(address(this).balance);
     }
 
-    // End Lazy minting feature
-    
-    // Do I need this???
     function getChainID() external view returns (uint256) {
         uint256 id;
         assembly {
@@ -233,8 +224,6 @@ contract LedaNFT is
         }
         return id;
     }
-
-    
 
     function tokenURI(uint256 tokenId)
         public

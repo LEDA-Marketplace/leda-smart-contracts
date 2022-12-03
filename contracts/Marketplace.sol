@@ -25,6 +25,7 @@ interface IERC2981 is IERC165 {
 }
 
 contract Marketplace is 
+            Initializable,
             UUPSUpgradeable, 
             OwnableUpgradeable, 
             ERC721HolderUpgradeable, 
