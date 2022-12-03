@@ -2,18 +2,8 @@
   "manifestVersion": "3.2",
   "proxies": [
     {
-      "address": "0x610178dA211FEF7D417bC0e6FeD39F05609AD788",
-      "txHash": "0xc3d24a324a63ecc4870d145d47e679b0c76994bfa0cad5a2d43a5d67cb12777e",
-      "kind": "uups"
-    },
-    {
       "address": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
       "txHash": "0xa5d20037979ac2960f9f845f79211810df149f0254dce763136328fdbbca8f3a",
-      "kind": "uups"
-    },
-    {
-      "address": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
-      "txHash": "0x1d77092f58f20e343c37eca8c96ddd67541af7e55aca3b5cc862f0cfa5702c00",
       "kind": "uups"
     },
     {
@@ -42,11 +32,6 @@
       "kind": "uups"
     },
     {
-      "address": "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
-      "txHash": "0x447d147e9be48ac1e6e1257207435d52d6817d480632a3a2bf3cab006e756a47",
-      "kind": "uups"
-    },
-    {
       "address": "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6",
       "txHash": "0x511cdadc5b0d1da4f7c3429fa263be5c569352cec398d69c73107edf212607e8",
       "kind": "uups"
@@ -60,12 +45,37 @@
       "address": "0x959922bE3CAee4b8Cd9a407cc3ac1C251C2007B1",
       "txHash": "0x67316248aa2fa91fd0a6ef8200357bc5b9523f617ac5a4346c2b2147ea6c7647",
       "kind": "uups"
+    },
+    {
+      "address": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+      "txHash": "0x25c46c63c7deeaed2f9f2c565f45472f22cebb07ec706b256bb458a0cf9f8671",
+      "kind": "uups"
+    },
+    {
+      "address": "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
+      "txHash": "0x2ad9529570fb19aab9e41a6d6b17595c09a608cd9c8efb849966ba750bd33b62",
+      "kind": "uups"
+    },
+    {
+      "address": "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853",
+      "txHash": "0xc3231323a5d1bbba974f70f96392e6b6648d18f6f1f73bf4ef36bcb6eda14d78",
+      "kind": "uups"
+    },
+    {
+      "address": "0x610178dA211FEF7D417bC0e6FeD39F05609AD788",
+      "txHash": "0x90cbbbcb4f41afefdcfd99847756bb6acd21cd93f64a03d5afe87a06e6e3d662",
+      "kind": "uups"
+    },
+    {
+      "address": "0x0B306BF915C4d645ff596e518fAf3F9669b97016",
+      "txHash": "0x13909c8d51dab9fe4c8b147553d4434b821f32b8e86eb2af9743cd03d68de754",
+      "kind": "uups"
     }
   ],
   "impls": {
     "47bba6dbcd20776f8d573df5fc929847e602caa88a3ad877d12cfa2954a9910b": {
-      "address": "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853",
-      "txHash": "0x72b2cb197f28273a4cce46d9b7215b921bdb631a2d16c7bd64cda18a8eac3793",
+      "address": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
+      "txHash": "0xe39bf81f82a2641beafe1afd3f97cd353c178d3bdfb86c238424777b1fe04c24",
       "layout": {
         "solcVersion": "0.8.16",
         "storage": [
@@ -202,7 +212,7 @@
             "label": "items",
             "offset": 0,
             "slot": "355",
-            "type": "t_mapping(t_uint256,t_struct(Item)6331_storage)",
+            "type": "t_mapping(t_uint256,t_struct(Item)1762_storage)",
             "contract": "Marketplace",
             "src": "contracts/Marketplace.sol:66"
           }
@@ -228,7 +238,7 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_enum(item_status)6313": {
+          "t_enum(item_status)1744": {
             "label": "enum Marketplace.item_status",
             "members": [
               "Not_Listed",
@@ -237,7 +247,7 @@
             ],
             "numberOfBytes": "1"
           },
-          "t_mapping(t_uint256,t_struct(Item)6331_storage)": {
+          "t_mapping(t_uint256,t_struct(Item)1762_storage)": {
             "label": "mapping(uint256 => struct Marketplace.Item)",
             "numberOfBytes": "32"
           },
@@ -253,7 +263,7 @@
             ],
             "numberOfBytes": "32"
           },
-          "t_struct(Item)6331_storage": {
+          "t_struct(Item)1762_storage": {
             "label": "struct Marketplace.Item",
             "members": [
               {
@@ -300,7 +310,7 @@
               },
               {
                 "label": "status",
-                "type": "t_enum(item_status)6313",
+                "type": "t_enum(item_status)1744",
                 "offset": 0,
                 "slot": "7"
               }
@@ -319,8 +329,8 @@
       }
     },
     "368d42efc0a1dd90d9cfa90a65c4e52183f4edf5eb8d23f0182066acc9c1fd6e": {
-      "address": "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
-      "txHash": "0x699c629137fa8ee7b5e5b36de7f71a2809c4e080a2819d8aad0c07033881751d",
+      "address": "0xA51c1fc2f0D1a1b8494Ed1FE312d7C3a78Ed91C0",
+      "txHash": "0xf5e3d48945a98ee02ab65390fab02dad6cb9fdd0366e3691c6ea1a49ecc4a350",
       "layout": {
         "solcVersion": "0.8.16",
         "storage": [
@@ -457,7 +467,7 @@
             "label": "items",
             "offset": 0,
             "slot": "355",
-            "type": "t_mapping(t_uint256,t_struct(Item)6331_storage)",
+            "type": "t_mapping(t_uint256,t_struct(Item)1762_storage)",
             "contract": "Marketplace",
             "src": "contracts/Marketplace.sol:66"
           }
@@ -483,7 +493,7 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_enum(item_status)6313": {
+          "t_enum(item_status)1744": {
             "label": "enum Marketplace.item_status",
             "members": [
               "Not_Listed",
@@ -492,7 +502,7 @@
             ],
             "numberOfBytes": "1"
           },
-          "t_mapping(t_uint256,t_struct(Item)6331_storage)": {
+          "t_mapping(t_uint256,t_struct(Item)1762_storage)": {
             "label": "mapping(uint256 => struct Marketplace.Item)",
             "numberOfBytes": "32"
           },
@@ -508,7 +518,7 @@
             ],
             "numberOfBytes": "32"
           },
-          "t_struct(Item)6331_storage": {
+          "t_struct(Item)1762_storage": {
             "label": "struct Marketplace.Item",
             "members": [
               {
@@ -555,7 +565,7 @@
               },
               {
                 "label": "status",
-                "type": "t_enum(item_status)6313",
+                "type": "t_enum(item_status)1744",
                 "offset": 0,
                 "slot": "7"
               }

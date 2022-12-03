@@ -2,10 +2,7 @@ import { expect } from "chai";
 import { ethers} from "hardhat";
 import { Contract, BigNumber, utils} from "ethers";
 import { upgrades } from "hardhat"
-import { IGetCreatorAndRoyalties__factory } from "../typechain-types";
 const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers");
-
-
 
 const URI:string = "sample URI";
 const marketplaceFeePercent = 30;

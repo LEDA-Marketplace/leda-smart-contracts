@@ -18,7 +18,8 @@ contract JupApesNFT is
         EIP712,
         AccessControl,
         ReentrancyGuard,
-        ERC721URIStorage, 
+        ERC721URIStorage,
+        ERC721Burnable,
         Pausable,
         Ownable
 {
@@ -40,12 +41,14 @@ contract JupApesNFT is
 
     uint public constant MAX_ROYALTIES_PERCENTAGE = 100;
     uint public constant CAP_VALUE = 10000;
-    uint private tokenCount;
+    uint public tokenCount;
 
     event LogNFTMinted(
         uint _nftId,
         address _owner,
-        string _nftURI
+        string _nftURI,
+        uint _royaltiesPercentage,
+        uint _stakingRewardsPercentage
     );
 
     modifier onlyValidRoyalty(uint _royaltyPercentage) {
@@ -66,6 +69,8 @@ contract JupApesNFT is
             _setupRole(MINTER_ROLE, msg.sender);
         }
 
+    
+
     function pause() public onlyOwner {
         _pause();
     }
@@ -79,7 +84,7 @@ contract JupApesNFT is
             string memory _tokenURI,
             uint96 _royaltiesPercentage,
             uint _stakingRewardsPercentage,
-            uint tokenId
+            uint _tokenId
         )
         external
         nonReentrant
@@ -94,12 +99,12 @@ contract JupApesNFT is
         );
 
         require(
-            tokenId > 0, 
+            _tokenId > 0, 
             "tokenId should be greater than zero!"
         );
 
         require(
-            !_exists(tokenId), 
+            !_exists(_tokenId), 
             "tokenId has been created!"
         );
 
@@ -111,14 +116,21 @@ contract JupApesNFT is
         // verify if we need to imcrement the Id
         // tokenCount.increment(); 
         // uint tokenId = tokenCount.current();
-        stakingRewardsPercentage[tokenId] = _stakingRewardsPercentage;
-        emit LogNFTMinted(tokenId, msg.sender, _tokenURI);
+        stakingRewardsPercentage[_tokenId] = _stakingRewardsPercentage;
+
+        emit LogNFTMinted(
+                _tokenId, 
+                msg.sender, 
+                _tokenURI, 
+                _royaltiesPercentage, 
+                _stakingRewardsPercentage
+        );
         tokenCount++;
-        _setTokenRoyalty(tokenId, msg.sender, _royaltiesPercentage);
-        _safeMint(_to, tokenId);
-        _setTokenURI(tokenId, _tokenURI);
+        _setTokenRoyalty(_tokenId, msg.sender, _royaltiesPercentage);
+        _safeMint(_to, _tokenId);
+        _setTokenURI(_tokenId, _tokenURI);
                
-        return(tokenId);
+        return(_tokenId);
     }
 
     function redeem(address redeemer, NFTVoucher calldata voucher) 

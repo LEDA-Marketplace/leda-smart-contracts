@@ -6,19 +6,13 @@ const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers");
 
 const ipfs = "ipfs://bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi";
 const zeroAddress = "0x0000000000000000000000000000000000000000";
+const _creatorFeePercent = 25;
+const _stakingRewardsPercentage = 100;
+const price = 1000;
+const feeDenominator = 1000;
+
 const toWei = (num:number) => ethers.utils.parseEther(num.toString())
 const fromWei = (num:number) => ethers.utils.formatEther(num)
-
-async function marketplaceFixture() {
-        const [owner, minterOne, minterTwo, buyer, seller, buyerTwo] = await ethers.getSigners();
-        
-        const ApesNFT = await ethers.getContractFactory("JupApesNFT");
-        const apesNft = await ApesNFT.deploy("Jupe Apes NFTs", "APES");
-
-        await apesNft.deployed();
-        
-        return { apesNft, owner, minterOne, minterTwo, buyer, seller, buyerTwo}
-}
 
 async function deploy() {
     const [minter, buyer, _] = await ethers.getSigners()
@@ -33,9 +27,186 @@ async function deploy() {
     return { minter, buyer, jupApes, redeemerContract }
 }
 
-describe("JupApes Contract Testing", () => { 
-    describe("Lazy JupApes NFT", function() {
-        it("Should deploy", async function() {
+describe("JupApes Contract Testing", () => {
+    describe("Jup Apes Test", () => {
+        it("should be able to mint a JupApe NFT", async () => {
+            const { jupApes, redeemerContract, buyer, minter} = await loadFixture(deploy);
+            const _to = minter.address;
+            const _tokenId = 1;
+            const tx1 = await jupApes.mint(
+                        _to,
+                        ipfs,
+                        _creatorFeePercent,
+                        _stakingRewardsPercentage,
+                        _tokenId
+                        );
+            
+            const receipt = await tx1.wait();
+            
+            expect(receipt.events[0].args._nftId).to.equal(_tokenId);
+            expect(receipt.events[0].args._owner).to.equal(_to);
+            expect(receipt.events[0].args._nftURI).to.equal(ipfs);
+            expect(receipt.events[0].args._royaltiesPercentage).to.equal(_creatorFeePercent);
+            expect(receipt.events[0].args._stakingRewardsPercentage).to.equal(_stakingRewardsPercentage);
+            
+            
+            expect(await jupApes.balanceOf(minter.address)).to.equal(1);
+            expect(await jupApes.ownerOf(1)).to.equal(minter.address);
+            expect(await jupApes.tokenURI(1)).to.equal(ipfs);
+        });
+
+        it("should be able to mint more than one JupApe NFT", async () => {
+            const { jupApes, redeemerContract, buyer, minter} = await loadFixture(deploy);
+            const _to = minter.address;
+            const _tokenId = 1;
+            await jupApes.mint(
+                        _to,
+                        ipfs,
+                        _creatorFeePercent,
+                        _stakingRewardsPercentage,
+                        _tokenId
+                        );
+            const ipfs2 = "ipfs2";
+            const _tokenId2 = 2;
+            await jupApes.mint(
+                        _to,
+                        ipfs2,
+                        _creatorFeePercent,
+                        _stakingRewardsPercentage,
+                        _tokenId2
+                        );
+            
+            expect(await jupApes.balanceOf(minter.address)).to.equal(2);
+            expect(await jupApes.ownerOf(_tokenId)).to.equal(minter.address);
+            expect(await jupApes.tokenURI(_tokenId)).to.equal(ipfs);
+            expect(await jupApes.ownerOf(_tokenId2)).to.equal(minter.address);
+            expect(await jupApes.tokenURI(_tokenId2)).to.equal(ipfs2);
+        });
+
+        it("should not mint if the contract is paused", async () => {
+            const { jupApes, redeemerContract, buyer, minter} = await loadFixture(deploy);
+            const _to = minter.address;
+            const _tokenId = 1;
+
+            await jupApes.pause();
+            await expect(jupApes.mint(
+                        _to,
+                        ipfs,
+                        _creatorFeePercent,
+                        _stakingRewardsPercentage,
+                        _tokenId
+                        )).to.be.revertedWith("Pausable: paused");
+        });
+
+        it("should verify that the royalties system is in place", async () => {
+            const { jupApes, redeemerContract, buyer, minter} = await loadFixture(deploy);
+            const _INTERFACE_ID_ERC2981 = "0x2a55205a";
+            const success = await jupApes.supportsInterface(_INTERFACE_ID_ERC2981);
+            expect(success).to.equal(true);
+        });
+
+        it("should validate nft creator and royalties", async () => {
+            const { jupApes, redeemerContract, buyer, minter} = await loadFixture(deploy);
+
+            const _to = minter.address;
+            const _tokenId = 1;
+
+            await jupApes.mint(
+                        _to,
+                        ipfs,
+                        _creatorFeePercent,
+                        _stakingRewardsPercentage,
+                        _tokenId
+                        );
+            
+            const [_creator, _royalties] = await jupApes.royaltyInfo(1, price);
+            expect(_creator).to.equal(minter.address);
+            
+            const royalties = (price * _creatorFeePercent) / feeDenominator;
+            expect(_royalties).to.equal(royalties);
+        });
+
+        it("should transfer an nft using transferFrom directly", async () => {
+            const { jupApes, redeemerContract, buyer, minter} = await loadFixture(deploy);
+
+            const _to = minter.address;
+            const _tokenId = 1;
+
+            await jupApes.mint(
+                        _to,
+                        ipfs,
+                        _creatorFeePercent,
+                        _stakingRewardsPercentage,
+                        _tokenId
+                        );
+
+            await jupApes.transferFrom(minter.address, buyer.address, 1);
+            
+            expect(await jupApes.ownerOf(1)).to.equal(buyer.address); 
+        });
+
+        it("should approve someone else to transfer an NFT", async () => {
+            const { jupApes, redeemerContract, buyer, minter} = await loadFixture(deploy);
+            const _to = minter.address;
+            const _tokenId = 1;
+
+            await jupApes.mint(
+                        _to,
+                        ipfs,
+                        _creatorFeePercent,
+                        _stakingRewardsPercentage,
+                        _tokenId
+                        );
+
+            await jupApes.setApprovalForAll(buyer.address, true);
+            await jupApes.connect(buyer).transferFrom(minter.address, buyer.address, 1);
+
+            expect(await jupApes.ownerOf(1)).to.equal(buyer.address);
+        });
+
+        it("should approve someone else using safeTransferFrom an NFT", async () => {
+            const { jupApes, redeemerContract, buyer, minter} = await loadFixture(deploy);
+            const _to = minter.address;
+            const _tokenId = 1;
+
+            await jupApes.mint(
+                        _to,
+                        ipfs,
+                        _creatorFeePercent,
+                        _stakingRewardsPercentage,
+                        _tokenId
+                        );
+
+            await jupApes.setApprovalForAll(buyer.address, true);
+            await jupApes.connect(buyer)["safeTransferFrom(address,address,uint256)"](minter.address, buyer.address, 1);
+            
+            expect(await jupApes.ownerOf(1)).to.equal(buyer.address);
+        });
+
+        it("should be able to burn an NFT", async () => {
+            const { jupApes, redeemerContract, buyer, minter} = await loadFixture(deploy);
+            const _to = minter.address;
+            const _tokenId = 1;
+
+            await jupApes.mint(
+                        _to,
+                        ipfs,
+                        _creatorFeePercent,
+                        _stakingRewardsPercentage,
+                        _tokenId
+                        );
+            
+            expect(await jupApes.ownerOf(1)).to.equal(minter.address);
+
+            expect(await jupApes.tokenCount()).to.equal(1);
+
+            await jupApes.burn(1);
+            await expect(jupApes.ownerOf(1))
+                .to.be.revertedWith("ERC721: invalid token ID");            
+        });
+    });
+    describe("Lazy JupApes NFT", () => {
+        it("Should deploy", async () => {
             const signers = await ethers.getSigners();
             const minter = signers[0].address;
 
