@@ -106,7 +106,42 @@ describe("LedaNFT Contract Testing", () => {
                 .to.be.revertedWith('The voucher has been redeemed!');
         });
 
-        
+        it("Should fail to redeem a voucher if minter address is equal to zero", async () => {
+            const { ledaNft, redeemerContract, buyer, minter} = await loadFixture(deploy);
+
+            const lazyMinter = new LazyLedaMinter(ledaNft, minter);
+            const minPrice = 0;
+            const royalties = 50;
+            const voucher = 
+                await lazyMinter.createVoucher(
+                    ipfs,
+                    minPrice,
+                    zeroAddress,
+                    royalties
+                );
+
+            await expect(redeemerContract.redeem(buyer.address, voucher))
+                .to.be.revertedWith('Creator is zero address!');
+        });
+
+        it("Should fail to redeem a voucher if buyer address is equal to zero", async () => {
+            const { ledaNft, redeemerContract, buyer, minter} = await loadFixture(deploy);
+
+            const lazyMinter = new LazyLedaMinter(ledaNft, minter);
+            const minPrice = 0;
+            const royalties = 50;
+            const voucher = 
+                await lazyMinter.createVoucher(
+                    ipfs,
+                    minPrice,
+                    minter.address,
+                    royalties
+                );
+
+            await expect(redeemerContract.redeem(zeroAddress, voucher))
+                .to.be.revertedWith('Redeemer is zero address!');
+        });
+
         it("Should fail to redeem a voucher signed by an unauthorized account", async () => {
             const { ledaNft, redeemerContract, buyer, minter} = await loadFixture(deploy);
 

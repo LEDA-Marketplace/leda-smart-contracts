@@ -131,6 +131,16 @@ contract LedaNFT is
         );
 
         require(
+            address(0) != redeemer, 
+            "Redeemer is zero address!"
+        );
+
+        require(
+            address(0) != voucher.creator, 
+            "Creator is zero address!"
+        );
+
+        require(
             msg.value >= voucher.minPrice, 
             "Insufficient funds to redeem"
         );

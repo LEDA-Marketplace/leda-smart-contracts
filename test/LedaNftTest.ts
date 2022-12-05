@@ -80,6 +80,16 @@ describe("LedaNFT Contract Testing", () => {
             .to.be.revertedWith("Pausable: paused");
         });
 
+        it("should mint a token with royalties equal to zero", async () => {
+            const {ledaNft, minterOne, minterTwo} = await loadFixture(ledaNftFixture);
+            await ledaNft.connect(minterOne).mint(URI, 0);
+            expect(await ledaNft.tokenCount()).to.equal(1);
+            const price = 100;
+            const [_creator, _royalties] = await ledaNft.royaltyInfo(1, price);
+            expect(_royalties).to.equal(0);
+            expect(_creator).to.equal(minterOne.address);
+        });
+
         it("should be able to set the maximum royalties amount value", async () => {
             const {ledaNft, minterOne, minterTwo} = await loadFixture(ledaNftFixture);
 
@@ -109,7 +119,7 @@ describe("LedaNFT Contract Testing", () => {
 
             await ledaNft.connect(minterOne).mint(URI, creatorFeePercent);
 
-            const [_creator, _royalties] = await ledaNft.connect(minterOne).callStatic.royaltyInfo(1, price);
+            const [_creator, _royalties] = await ledaNft.royaltyInfo(1, price);
 
             expect(_creator).to.equal(minterOne.address);
             

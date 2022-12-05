@@ -8,7 +8,7 @@ const ipfs = "ipfs://bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi
 const zeroAddress = "0x0000000000000000000000000000000000000000";
 const _creatorFeePercent = 25;
 const _stakingRewardsPercentage = 100;
-const price = 1000;
+const minPrice = ethers.constants.WeiPerEther; // charge 1 Eth
 const feeDenominator = 1000;
 
 const toWei = (num:number) => ethers.utils.parseEther(num.toString())
@@ -83,6 +83,20 @@ describe("JupApes Contract Testing", () => {
             expect(await jupApes.tokenURI(_tokenId2)).to.equal(ipfs2);
         });
 
+        it("should not mint if the receiver is the zero address", async () => {
+            const { jupApes, redeemerContract, buyer, minter} = await loadFixture(deploy);
+            const _to = zeroAddress;
+            const _tokenId = 1;
+
+            await expect(jupApes.mint(
+                        _to,
+                        ipfs,
+                        _creatorFeePercent,
+                        _stakingRewardsPercentage,
+                        _tokenId
+                        )).to.be.revertedWith("Receiver is the zero address");
+        });
+
         it("should not mint if the contract is paused", async () => {
             const { jupApes, redeemerContract, buyer, minter} = await loadFixture(deploy);
             const _to = minter.address;
@@ -119,10 +133,10 @@ describe("JupApes Contract Testing", () => {
                         _tokenId
                         );
             
-            const [_creator, _royalties] = await jupApes.royaltyInfo(1, price);
+            const [_creator, _royalties] = await jupApes.royaltyInfo(1, minPrice);
             expect(_creator).to.equal(minter.address);
-            
-            const royalties = (price * _creatorFeePercent) / feeDenominator;
+
+            const royalties = minPrice.mul(_creatorFeePercent).div(feeDenominator);
             expect(_royalties).to.equal(royalties);
         });
 
@@ -219,23 +233,55 @@ describe("JupApes Contract Testing", () => {
             const { jupApes, redeemerContract, buyer, minter} = await loadFixture(deploy);
 
             const lazyMinter = new LazyMinter( jupApes, minter );
-            const voucher = await lazyMinter.createVoucher(1,ipfs);
+            const _tokenId = 1;
+            const voucher = await lazyMinter.createVoucher(
+                _tokenId,
+                ipfs,
+                0,
+                _creatorFeePercent,
+                _stakingRewardsPercentage
+            );
             
             await expect(redeemerContract.redeem(buyer.address, voucher))
             .to.emit(jupApes, 'Transfer')  // transfer from null address to minter
             .withArgs(zeroAddress, minter.address, voucher.tokenId)
             .and.to.emit(jupApes, 'Transfer') // transfer from minter to redeemer
             .withArgs(minter.address, buyer.address, voucher.tokenId);
-            /*
+            
             const nftOwner = await redeemerContract.ownerOf(1);
-            expect(nftOwner).to.equal(buyer.address); */
+            expect(nftOwner).to.equal(buyer.address);
         });
-        /*
+
+        it("Should fail if the redeemer is the zero address", async () => {
+            const { jupApes, redeemerContract, buyer, minter} = await loadFixture(deploy);
+
+            const lazyMinter = new LazyMinter( jupApes, minter );
+            const _tokenId = 1;
+            const voucher = await lazyMinter.createVoucher(
+                _tokenId,
+                ipfs,
+                0,
+                _creatorFeePercent,
+                _stakingRewardsPercentage
+            );
+            
+            await expect(redeemerContract.redeem(zeroAddress, voucher))
+                .to.be.revertedWith("Redeemer is the zero address")
+            
+        });
+        
         it("Should fail to redeem an NFT that's already been claimed", async function() {
             const { jupApes, redeemerContract, buyer, minter} = await loadFixture(deploy);
 
             const lazyMinter = new LazyMinter(jupApes, minter );
-            const voucher = await lazyMinter.createVoucher(1, ipfs);
+            const _tokenId = 1;
+            const voucher = await lazyMinter.createVoucher(
+                _tokenId,
+                ipfs,
+                0,
+                _creatorFeePercent,
+                _stakingRewardsPercentage
+            );
 
             await expect(redeemerContract.redeem(buyer.address, voucher))
                 .to.emit(jupApes, 'Transfer')  // transfer from null address to minter
@@ -246,7 +292,7 @@ describe("JupApes Contract Testing", () => {
             await expect(redeemerContract.redeem(buyer.address, voucher))
                 .to.be.revertedWith('ERC721: token already minted');
         });
-
+        
         it("Should fail to redeem an NFT voucher that's signed by an unauthorized account", async () => {
             const { jupApes, redeemerContract, buyer, minter} = await loadFixture(deploy);
 
@@ -254,12 +300,20 @@ describe("JupApes Contract Testing", () => {
             const rando = signers[signers.length-1];
     
             const lazyMinter = new LazyMinter(jupApes, rando);
-            const voucher = await lazyMinter.createVoucher(1, ipfs);
+
+            const _tokenId = 1;
+            const voucher = await lazyMinter.createVoucher(
+                _tokenId,
+                ipfs,
+                0,
+                _creatorFeePercent,
+                _stakingRewardsPercentage
+            );
 
             await expect(redeemerContract.redeem(buyer.address, voucher))
                 .to.be.revertedWith('Signature invalid or unauthorized');
         });
-
+        
         it("Should fail to redeem an NFT voucher that's been modified", async function() {
             const { jupApes, redeemerContract, buyer, minter} = await loadFixture(deploy);
 
@@ -267,12 +321,20 @@ describe("JupApes Contract Testing", () => {
             const rando = signers[signers.length-1];
             
             const lazyMinter = new LazyMinter( jupApes, rando );
-            const voucher = await lazyMinter.createVoucher(1, ipfs);
+            const _tokenId = 1;
+            const voucher = await lazyMinter.createVoucher(
+                _tokenId,
+                ipfs,
+                0,
+                _creatorFeePercent,
+                _stakingRewardsPercentage
+            );
+
             voucher.tokenId = 2;
             await expect(redeemerContract.redeem(buyer.address, voucher))
             .to.be.revertedWith('Signature invalid or unauthorized');
         });
-
+        
         it("Should fail to redeem an NFT voucher with an invalid signature", async function() {
             const { jupApes, redeemerContract, buyer, minter} = await loadFixture(deploy);
 
@@ -280,7 +342,14 @@ describe("JupApes Contract Testing", () => {
             const rando = signers[signers.length-1];
             
             const lazyMinter = new LazyMinter( jupApes, rando );
-            const voucher = await lazyMinter.createVoucher(1, ipfs);
+            const _tokenId = 1;
+            const voucher = await lazyMinter.createVoucher(
+                _tokenId,
+                ipfs,
+                0,
+                _creatorFeePercent,
+                _stakingRewardsPercentage
+            );
 
             const dummyData = ethers.utils.randomBytes(128)
             voucher.signature = await minter.signMessage(dummyData);
@@ -288,13 +357,20 @@ describe("JupApes Contract Testing", () => {
             await expect(redeemerContract.redeem(buyer.address, voucher))
             .to.be.revertedWith('Signature invalid or unauthorized');
         });
-
+        
         it("Should redeem if payment is >= minPrice", async function() {
             const { jupApes, redeemerContract, buyer, minter} = await loadFixture(deploy);
 
             const lazyMinter = new LazyMinter( jupApes, minter );
-            const minPrice = ethers.constants.WeiPerEther; // charge 1 Eth
-            const voucher = await lazyMinter.createVoucher(1, ipfs, minPrice);
+            
+            const _tokenId = 1;
+            const voucher = await lazyMinter.createVoucher(
+                _tokenId,
+                ipfs,
+                minPrice,
+                _creatorFeePercent,
+                _stakingRewardsPercentage
+            );
 
             await expect(redeemerContract.redeem(buyer.address, voucher, { value: minPrice }))
             .to.emit(jupApes, 'Transfer')  // transfer from null address to minter
@@ -302,21 +378,95 @@ describe("JupApes Contract Testing", () => {
             .and.to.emit(jupApes, 'Transfer') // transfer from minter to redeemer
             .withArgs(minter.address, buyer.address, voucher.tokenId);
         });
-
+        
         it("Should fail to redeem if payment is < minPrice", async function() {
             const { jupApes, redeemerContract, buyer, minter} = await loadFixture(deploy);
 
             const lazyMinter = new LazyMinter( jupApes, minter );
-            const minPrice = ethers.constants.WeiPerEther // charge 1 Eth
+            const _tokenId = 1;
             const voucher = await lazyMinter.createVoucher(
-                1, 
-                ipfs, 
-                minPrice
+                _tokenId,
+                ipfs,
+                minPrice,
+                _creatorFeePercent,
+                _stakingRewardsPercentage
             );
 
             const payment = minPrice.sub(10000)
             await expect(redeemerContract.redeem(buyer.address, voucher, { value: payment }))
             .to.be.revertedWith('Insufficient funds to redeem')
-        });*/
+        });
+
+        it("Should withdraw funds from several redeems", async () => {
+            const { jupApes, redeemerContract, buyer, minter} = await loadFixture(deploy);
+
+            const signers = await ethers.getSigners();
+            const creatorOne = signers[signers.length-1];
+            const creatorTwo = signers[signers.length-2];
+            const creatorThree = signers[signers.length-3];
+
+            
+            let lazyMinter = new LazyMinter( jupApes, minter );
+            const _tokenIdOne = 1;
+            const voucherOne = 
+                await lazyMinter.createVoucher(
+                    _tokenIdOne,
+                    ipfs,
+                    minPrice,
+                    _creatorFeePercent,
+                    _stakingRewardsPercentage
+                );
+
+            lazyMinter = new LazyMinter( jupApes, minter );
+            const _tokenIdTwo = 2;
+            const voucherTwo = 
+                await lazyMinter.createVoucher(
+                    _tokenIdTwo,
+                    ipfs,
+                    minPrice.mul(2),
+                    _creatorFeePercent,
+                    _stakingRewardsPercentage
+                );
+
+            lazyMinter = new LazyMinter( jupApes, minter );
+            const _tokenIdThree = 3;
+            const voucherThree = 
+                await lazyMinter.createVoucher(
+                    _tokenIdThree,
+                    ipfs,
+                    minPrice.mul(3),
+                    _creatorFeePercent,
+                    _stakingRewardsPercentage
+                );
+
+            const priceOne = minPrice;
+            const priceTwo = minPrice.mul(2);
+            const priceThree = minPrice.mul(3);
+
+            await redeemerContract.redeem(buyer.address, voucherOne, { value: priceOne });
+            await redeemerContract.redeem(buyer.address, voucherTwo, { value: priceTwo });
+            await redeemerContract.redeem(buyer.address, voucherThree, { value: priceThree });
+
+            const nftOwnerOne = await redeemerContract.ownerOf(1);
+            const nftOwnerTwo = await redeemerContract.ownerOf(2);
+            const nftOwnerThree = await redeemerContract.ownerOf(3);
+
+            expect(nftOwnerOne).to.equal(buyer.address);
+            expect(nftOwnerTwo).to.equal(buyer.address);
+            expect(nftOwnerThree).to.equal(buyer.address);
+
+            const totalProfits = minPrice.mul(6);
+
+            //const contractBalance = minPrice.mul(6).sub(totalProfits);
+            expect(await jupApes.getContractBalance()).to.equal(totalProfits);
+
+            // withdrawal should increase minter's balance
+            await expect(await jupApes.withdraw())
+            .to.changeEtherBalance(minter, totalProfits);
+
+            // minter should now have zero available
+            expect(await jupApes.getContractBalance()).to.equal(0);
+            expect(await jupApes.tokenCount()).to.equal(3);
+        });
     });
 });

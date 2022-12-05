@@ -26,21 +26,12 @@ contract JupApesNFT is
         Pausable,
         Ownable
 {
-      
-    /* struct NFTVoucher {
-        uint256 tokenId;
-        uint256 minPrice;
-        string uri;
-        bytes signature;
-    } */
 
     mapping(uint => uint) public stakingRewardsPercentage;
     mapping (address => uint256) pendingWithdrawals;
     
     // This means that the maximun amount is 10%
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
-    string private constant SIGNING_DOMAIN = "LazyNFT-Voucher";
-    string private constant SIGNATURE_VERSION = "1";
 
     uint public constant MAX_ROYALTIES_PERCENTAGE = 100;
     uint public constant CAP_VALUE = 10000;
@@ -113,7 +104,7 @@ contract JupApesNFT is
 
         require(
             _to != address(0), 
-            "Receiver can't be the zero address"
+            "Receiver is the zero address"
         );
         
         stakingRewardsPercentage[_tokenId] = _stakingRewardsPercentage;
@@ -138,6 +129,11 @@ contract JupApesNFT is
         payable 
         returns (uint256) 
     {
+        require(
+            redeemer != address(0), 
+            "Redeemer is the zero address"
+        );
+
         address signer = _verify(voucher);
 
         require(hasRole(MINTER_ROLE, signer), "Signature invalid or unauthorized");
@@ -154,23 +150,7 @@ contract JupApesNFT is
 
         return voucher.tokenId;
     }
-    /*
-    /// @notice Returns a hash of the given NFTVoucher, prepared using EIP712 typed data hashing rules.
-    /// @param voucher An NFTVoucher to hash.
-    function _hash(NFTVoucher calldata voucher) 
-        internal 
-        view 
-        returns (bytes32) 
-    {
-        return _hashTypedDataV4(keccak256(abi.encode(
-            keccak256("NFTVoucher(uint256 tokenId,uint256 minPrice,string uri)"),
-            voucher.tokenId,
-            voucher.minPrice,
-            keccak256(bytes(voucher.uri))
-        )));
-    }*/
 
-    // Do I need this???
     function getChainID() external view returns (uint256) {
         uint256 id;
         assembly {
@@ -178,15 +158,6 @@ contract JupApesNFT is
         }
         return id;
     }
-
-    /*function _verify(NFTVoucher calldata voucher) 
-        internal 
-        view 
-        returns (address) 
-    {
-        bytes32 digest = _hash(voucher);
-        return ECDSA.recover(digest, voucher.signature);
-    }*/
 
     // The following functions are overrides required by Solidity.
     function _burn(uint256 tokenId)
@@ -213,6 +184,15 @@ contract JupApesNFT is
     {
         return super.supportsInterface(interfaceId) || AccessControl.supportsInterface(interfaceId);
     }
+
+    function getContractBalance()
+        external
+        view
+        returns(uint)
+    {
+        return address(this).balance;
+    }
+
 
     function withdraw() 
         external
