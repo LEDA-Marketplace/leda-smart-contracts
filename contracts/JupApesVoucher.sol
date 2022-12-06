@@ -17,7 +17,8 @@ contract JupApesVoucher is EIP712{
     string private constant SIGNING_DOMAIN = "LazyNFT-Voucher";
     string private constant SIGNATURE_VERSION = "1";
 
-    constructor() EIP712(SIGNING_DOMAIN, SIGNATURE_VERSION) {}
+    constructor() EIP712(SIGNING_DOMAIN, SIGNATURE_VERSION){
+    }
 
     function _verify(NFTVoucher calldata voucher) 
         internal 
@@ -47,6 +48,12 @@ contract JupApesVoucher is EIP712{
         )));
     }
 
-    
+    function getChainID() external view returns (uint256) {
+        uint256 id;
+        assembly {
+            id := chainid()
+        }
+        return id;
+    }
 
 }

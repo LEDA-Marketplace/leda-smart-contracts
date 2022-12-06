@@ -11,7 +11,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/common/ERC2981.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/draft-EIP712.sol";
-
 import "./JupApesVoucher.sol";
 
 contract JupApesNFT is 
@@ -28,7 +27,6 @@ contract JupApesNFT is
 {
 
     mapping(uint => uint) public stakingRewardsPercentage;
-    mapping (address => uint256) pendingWithdrawals;
     
     // This means that the maximun amount is 10%
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
@@ -51,19 +49,22 @@ contract JupApesNFT is
             "Royalties percentage should be equal or lesss than 10%"
         );
         _;
-    } 
+    }
+
+    modifier validReceiverAddress(address _to) {
+        require(_to != address(0), 
+        "Receiver is the zero address");
+        _;
+    }
 
     constructor(
-            string memory name, 
-            string memory symbol
+            string memory _nameNFT,
+            string memory _symbolNFT
         )
-        ERC721(name, symbol)
-        //EIP712(SIGNING_DOMAIN, SIGNATURE_VERSION) 
+        ERC721(_nameNFT, _symbolNFT)
         {
             _setupRole(MINTER_ROLE, msg.sender);
         }
-
-    
 
     function pause() external onlyOwner {
         _pause();
@@ -84,6 +85,8 @@ contract JupApesNFT is
         nonReentrant
         whenNotPaused
         onlyOwner
+        validReceiverAddress(_to)
+        onlyValidRoyalty(_royaltiesPercentage)
         returns(uint) 
     {
 
@@ -97,16 +100,6 @@ contract JupApesNFT is
             "tokenId should be greater than zero!"
         );
 
-        require(
-            !_exists(_tokenId), 
-            "tokenId has been created!"
-        );
-
-        require(
-            _to != address(0), 
-            "Receiver is the zero address"
-        );
-        
         stakingRewardsPercentage[_tokenId] = _stakingRewardsPercentage;
 
         emit LogNFTMinted(
@@ -126,37 +119,33 @@ contract JupApesNFT is
 
     function redeem(address redeemer, NFTVoucher calldata voucher) 
         external 
-        payable 
+        payable
+        nonReentrant
+        validReceiverAddress(redeemer)
+        onlyValidRoyalty(voucher.royalties)
         returns (uint256) 
     {
-        require(
-            redeemer != address(0), 
-            "Redeemer is the zero address"
-        );
-
         address signer = _verify(voucher);
 
-        require(hasRole(MINTER_ROLE, signer), "Signature invalid or unauthorized");
+        require(
+            hasRole(MINTER_ROLE, signer), 
+            "Signature invalid or unauthorized"
+        );
 
-        require(msg.value >= voucher.minPrice, "Insufficient funds to redeem");
+        require(
+            msg.value >= voucher.minPrice, 
+            "Insufficient funds to redeem"
+        );
 
         tokenCount++;
-        //add royalties
+        stakingRewardsPercentage[voucher.tokenId] = voucher.stakingRewards;
+        _setTokenRoyalty(voucher.tokenId, signer, uint96(voucher.royalties));
         _safeMint(signer, voucher.tokenId);
         _setTokenURI(voucher.tokenId, voucher.uri);
+
         _safeTransfer(signer, redeemer, voucher.tokenId, "");
 
-        pendingWithdrawals[signer] += msg.value;
-
         return voucher.tokenId;
-    }
-
-    function getChainID() external view returns (uint256) {
-        uint256 id;
-        assembly {
-            id := chainid()
-        }
-        return id;
     }
 
     // The following functions are overrides required by Solidity.

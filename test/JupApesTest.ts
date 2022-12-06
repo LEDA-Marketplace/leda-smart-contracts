@@ -55,6 +55,20 @@ describe("JupApes Contract Testing", () => {
             expect(await jupApes.tokenURI(1)).to.equal(ipfs);
         });
 
+        it("should fail if minter is not the contract owner", async () => {
+            const { jupApes, redeemerContract, buyer, minter} = await loadFixture(deploy);
+            const _to = minter.address;
+            const _tokenId = 1;
+            await expect(redeemerContract.mint(
+                        _to,
+                        ipfs,
+                        _creatorFeePercent,
+                        _stakingRewardsPercentage,
+                        _tokenId
+                        ))
+            .to.be.revertedWith("Ownable: caller is not the owner");
+        });
+
         it("should be able to mint more than one JupApe NFT", async () => {
             const { jupApes, redeemerContract, buyer, minter} = await loadFixture(deploy);
             const _to = minter.address;
@@ -83,6 +97,34 @@ describe("JupApes Contract Testing", () => {
             expect(await jupApes.tokenURI(_tokenId2)).to.equal(ipfs2);
         });
 
+        it("should fail if a tokenId has been minted", async () => {
+            const { jupApes, redeemerContract, buyer, minter} = await loadFixture(deploy);
+            const _to = minter.address;
+            const _tokenId = 1;
+            await jupApes.mint(
+                        _to,
+                        ipfs,
+                        _creatorFeePercent,
+                        _stakingRewardsPercentage,
+                        _tokenId
+                        );
+            const ipfs2 = "ipfs2";
+            const _tokenId2 = 1;
+            
+            await expect(jupApes.mint(
+                        _to,
+                        ipfs2,
+                        _creatorFeePercent,
+                        _stakingRewardsPercentage,
+                        _tokenId2
+                        ))
+            .to.be.revertedWith("ERC721: token already minted");
+
+            expect(await jupApes.balanceOf(minter.address)).to.equal(1);
+            expect(await jupApes.ownerOf(_tokenId)).to.equal(minter.address);
+            expect(await jupApes.tokenURI(_tokenId)).to.equal(ipfs);
+        });
+
         it("should not mint if the receiver is the zero address", async () => {
             const { jupApes, redeemerContract, buyer, minter} = await loadFixture(deploy);
             const _to = zeroAddress;
@@ -96,6 +138,23 @@ describe("JupApes Contract Testing", () => {
                         _tokenId
                         )).to.be.revertedWith("Receiver is the zero address");
         });
+
+        it("should verify the staking rewards percentage", async () => {
+            const { jupApes, redeemerContract, buyer, minter} = await loadFixture(deploy);
+            const _to = minter.address;
+            const _tokenId = 1;
+
+            await jupApes.mint(
+                        _to,
+                        ipfs,
+                        _creatorFeePercent,
+                        _stakingRewardsPercentage,
+                        _tokenId
+                        );
+            const rewards = await jupApes.stakingRewardsPercentage(_tokenId);
+
+            expect(_stakingRewardsPercentage).to.equal(rewards);
+        })
 
         it("should not mint if the contract is paused", async () => {
             const { jupApes, redeemerContract, buyer, minter} = await loadFixture(deploy);
@@ -252,6 +311,54 @@ describe("JupApes Contract Testing", () => {
             expect(nftOwner).to.equal(buyer.address);
         });
 
+        it("Should validate if the NFT royalties are in place", async () => {
+            const { jupApes, redeemerContract, buyer, minter} = await loadFixture(deploy);
+
+            const lazyMinter = new LazyMinter( jupApes, minter );
+            const _tokenId = 1;
+            const voucher = await lazyMinter.createVoucher(
+                _tokenId,
+                ipfs,
+                minPrice,
+                _creatorFeePercent,
+                _stakingRewardsPercentage
+            );
+            
+            await redeemerContract.redeem(buyer.address, voucher, { value: minPrice });
+            
+            const nftOwner = await redeemerContract.ownerOf(1);
+            expect(nftOwner).to.equal(buyer.address);
+
+            const [_creator, _royalties] = await jupApes.royaltyInfo(_tokenId, minPrice);
+
+            const royaltiesValue = minPrice.mul(_creatorFeePercent).div(feeDenominator);
+            expect(_royalties).to.equal(royaltiesValue);
+        });
+
+        it("Should validate if the NFT staking rewards are in place", async () => {
+            const { jupApes, redeemerContract, buyer, minter} = await loadFixture(deploy);
+
+            const lazyMinter = new LazyMinter( jupApes, minter );
+            const _tokenId = 1;
+            const voucher = await lazyMinter.createVoucher(
+                _tokenId,
+                ipfs,
+                0,
+                _creatorFeePercent,
+                _stakingRewardsPercentage
+            );
+            
+            await redeemerContract.redeem(buyer.address, voucher);
+            
+            const nftOwner = await redeemerContract.ownerOf(1);
+            expect(nftOwner).to.equal(buyer.address);
+
+            const rewards = await jupApes.stakingRewardsPercentage(_tokenId);
+
+            expect(voucher.stakingRewards).to.equal(rewards);
+
+        });
+
         it("Should fail if the redeemer is the zero address", async () => {
             const { jupApes, redeemerContract, buyer, minter} = await loadFixture(deploy);
 
@@ -266,7 +373,7 @@ describe("JupApes Contract Testing", () => {
             );
             
             await expect(redeemerContract.redeem(zeroAddress, voucher))
-                .to.be.revertedWith("Redeemer is the zero address")
+                .to.be.revertedWith("Receiver is the zero address")
             
         });
         
@@ -374,7 +481,7 @@ describe("JupApes Contract Testing", () => {
 
             await expect(redeemerContract.redeem(buyer.address, voucher, { value: minPrice }))
             .to.emit(jupApes, 'Transfer')  // transfer from null address to minter
-            .withArgs('0x0000000000000000000000000000000000000000', minter.address, voucher.tokenId)
+            .withArgs(zeroAddress, minter.address, voucher.tokenId)
             .and.to.emit(jupApes, 'Transfer') // transfer from minter to redeemer
             .withArgs(minter.address, buyer.address, voucher.tokenId);
         });

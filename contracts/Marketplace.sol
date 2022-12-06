@@ -9,28 +9,16 @@ import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.
 import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol";
-
-interface IERC165 {
-    function supportsInterface(bytes4 interfaceID) external view returns (bool);
-}
-
-interface IERC2981 is IERC165 {
-    function royaltyInfo(
-        uint256 _tokenId,
-        uint256 _salePrice
-    ) external view returns (
-        address receiver,
-        uint256 royaltyAmount
-    );
-}
+import "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
 
 contract Marketplace is 
             Initializable,
             UUPSUpgradeable, 
             OwnableUpgradeable, 
+            PausableUpgradeable,
             ERC721HolderUpgradeable, 
-            ReentrancyGuardUpgradeable, 
-            PausableUpgradeable 
+            ReentrancyGuardUpgradeable
     {
     using CountersUpgradeable for CountersUpgradeable.Counter;
     CountersUpgradeable.Counter private itemsCount;
@@ -38,7 +26,7 @@ contract Marketplace is
 
     // Royalties should be received as an integer number
     // i.e., if royalties are 2.5% this contract should receive 25
-    uint constant TO_PERCENTAGE = 1000;
+    uint private constant TO_PERCENTAGE = 1000;
     bytes4 private constant _INTERFACE_ID_ERC2981 = 0x2a55205a;
 
     // Percentage fee on sales
@@ -87,12 +75,22 @@ contract Marketplace is
     event LogChangeStatus(
         uint _itemID, 
         address _seller, 
-        item_status _newStatus);
+        item_status _newStatus
+    );
 
     event LogChangePrice(
         uint _itemId, 
         address _sender, 
-        uint _newPrice);
+        uint _newPrice
+    );
+
+    event LogSettListingFeesPercentage(
+        uint _listingFeePercentage
+    );
+    
+    event LogSetFeePercentage(
+        uint _feePercentage
+    );
 
     function initialize(uint _feePercentage) 
         public
@@ -106,18 +104,20 @@ contract Marketplace is
         listingFeePercentage = 0;
     }
 
-    function setListingFeesPercentage(uint _listingFeePercentage) 
+    function setListingFeesPercentage(uint _listingFeePercentage)
+        external
         onlyOwner 
-        external 
     {
         listingFeePercentage = _listingFeePercentage;
+        emit LogSettListingFeesPercentage(_listingFeePercentage);
     }
 
     function setFeePercentage(uint _feePercentage) 
-        onlyOwner 
         external 
+        onlyOwner 
     {
         feePercentage = _feePercentage;
+        emit LogSetFeePercentage(_feePercentage);
     }
 
     function getListingFees(uint _price)
@@ -160,10 +160,10 @@ contract Marketplace is
         uint itemId = itemsCount.current();
         
         address _creator;
-        uint _creatorRoyalties;
+        uint _creatorRoyalties = 0;
 
         if(checkRoyalties(_nft))
-            (_creator, _creatorRoyalties) = IERC2981(_nft).royaltyInfo(_tokenId, _price);
+            (_creator, _creatorRoyalties) = IERC2981Upgradeable(_nft).royaltyInfo(_tokenId, _price);
         else
             _creator = msg.sender;
         
@@ -199,7 +199,7 @@ contract Marketplace is
         view
         returns (bool) 
     {
-        (bool success) = IERC165(_contract).supportsInterface(_INTERFACE_ID_ERC2981);
+        (bool success) = IERC165Upgradeable(_contract).supportsInterface(_INTERFACE_ID_ERC2981);
         return success;
     }
     
@@ -259,8 +259,8 @@ contract Marketplace is
     function buyItem(uint _itemId) 
         external 
         payable
+        nonReentrant
         whenNotPaused
-        nonReentrant 
     {
         Item storage item = items[_itemId];
         require(_itemId > 0 && _itemId <= itemsCount.current(), "item does not exist");
@@ -273,7 +273,7 @@ contract Marketplace is
         (item.seller).transfer(profits);
         
         // update item to sold
-        item.status =  item_status.Sold;
+        item.status = item_status.Sold;
         
         // increase counter
         itemsSold.increment();
@@ -294,24 +294,24 @@ contract Marketplace is
     }
 
     function getItemsSold() 
+        external
         view 
-        external 
         returns (uint) 
     {
         return itemsSold.current();
     }
 
-    function getItemsCount() 
-        view 
-        external 
+    function getItemsCount()
+        external
+        view
         returns (uint) 
     {
         return itemsCount.current();
     }
 
     function getProfits(uint _itemId, uint _creatorRoyalties)
-        view 
         internal
+        view 
         returns(uint _sellerAmount)
     {
         uint _platformFees;

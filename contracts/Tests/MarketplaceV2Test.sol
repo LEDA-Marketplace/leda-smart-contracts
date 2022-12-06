@@ -6,7 +6,7 @@ import "../Marketplace.sol";
 contract MarketplaceV2Test is Marketplace{
 
     //constructor() Markeplace(50) {};
-    function getVersion () pure public returns (uint) 
+    function getVersion () external pure returns (uint) 
     {
         return 2;
     }

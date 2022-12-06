@@ -99,7 +99,11 @@ describe("LedaNFT Contract Testing", () => {
             .to.be.revertedWith("Royalties percentage exceeds the maximum value!");
 
             // New max is 15%
-            await ledaNft.setMaxCreatorRoyalties(newMaxCreatorRoyalties);
+            await expect(ledaNft.setMaxCreatorRoyalties(newMaxCreatorRoyalties))
+            .to.emit(ledaNft, "LogSetMaxCreatorRoyalties")
+            .withArgs(
+                newMaxCreatorRoyalties
+            );
 
             await ledaNft.connect(minterOne).mint(URI, newMaxCreatorRoyalties);
 

@@ -1,2 +1,2 @@
-MarketplaceV2Test.sol
-ApesNFT.sol
+contracts/Tests/MarketplaceV2Test.sol
+contracts/Tests/LedaNFTTest.sol
