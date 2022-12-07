@@ -1,6 +1,5 @@
 import { expect } from "chai";
 import { ethers} from "hardhat";
-//import { Contract, BigNumber, utils} from "ethers";
 const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers");
 
 const URI:string = "sample URI";
@@ -81,6 +80,16 @@ describe("LedaNFT Contract Testing", () => {
             .to.be.revertedWith("Pausable: paused");
         });
 
+        it("should mint a token with royalties equal to zero", async () => {
+            const {ledaNft, minterOne, minterTwo} = await loadFixture(ledaNftFixture);
+            await ledaNft.connect(minterOne).mint(URI, 0);
+            expect(await ledaNft.tokenCount()).to.equal(1);
+            const price = 100;
+            const [_creator, _royalties] = await ledaNft.royaltyInfo(1, price);
+            expect(_royalties).to.equal(0);
+            expect(_creator).to.equal(minterOne.address);
+        });
+
         it("should be able to set the maximum royalties amount value", async () => {
             const {ledaNft, minterOne, minterTwo} = await loadFixture(ledaNftFixture);
 
@@ -90,7 +99,11 @@ describe("LedaNFT Contract Testing", () => {
             .to.be.revertedWith("Royalties percentage exceeds the maximum value!");
 
             // New max is 15%
-            await ledaNft.setMaxCreatorRoyalties(newMaxCreatorRoyalties);
+            await expect(ledaNft.setMaxCreatorRoyalties(newMaxCreatorRoyalties))
+            .to.emit(ledaNft, "LogSetMaxCreatorRoyalties")
+            .withArgs(
+                newMaxCreatorRoyalties
+            );
 
             await ledaNft.connect(minterOne).mint(URI, newMaxCreatorRoyalties);
 
@@ -98,12 +111,19 @@ describe("LedaNFT Contract Testing", () => {
             expect(await ledaNft.balanceOf(minterOne.address)).to.equal(1);
         });
 
+        it("should verify that the royalties system is in place", async () => {
+            const {ledaNft, minterOne, owner, minterTwo, buyerOne} = await loadFixture(ledaNftFixture);
+            const _INTERFACE_ID_ERC2981 = "0x2a55205a";
+            const success = await ledaNft.supportsInterface(_INTERFACE_ID_ERC2981);
+            expect(success).to.equal(true);
+        });
+
         it("should validate nft creator and royalties", async () => {
             const {ledaNft, minterOne, owner, minterTwo} = await loadFixture(ledaNftFixture);
 
             await ledaNft.connect(minterOne).mint(URI, creatorFeePercent);
 
-            const [_creator, _royalties] = await ledaNft.connect(minterOne).callStatic.royaltyInfo(1, price);
+            const [_creator, _royalties] = await ledaNft.royaltyInfo(1, price);
 
             expect(_creator).to.equal(minterOne.address);
             
@@ -120,12 +140,7 @@ describe("LedaNFT Contract Testing", () => {
             expect(await ledaNft.ownerOf(1)).to.equal(buyerOne.address); 
         });
 
-        it("should verify that the royalties system is in place", async () => {
-            const {ledaNft, minterOne, owner, minterTwo, buyerOne} = await loadFixture(ledaNftFixture);
-            const _INTERFACE_ID_ERC2981 = "0x2a55205a";
-            const success = await ledaNft.supportsInterface(_INTERFACE_ID_ERC2981);
-            expect(success).to.equal(true);
-        });
+        
 
         it("should approve someone else to transfer an NFT", async () => {
             const {ledaNft, minterOne, owner, minterTwo, buyerOne} = await loadFixture(ledaNftFixture);
@@ -158,6 +173,6 @@ describe("LedaNFT Contract Testing", () => {
             await ledaNft.connect(minterOne).burn(1);
             await expect(ledaNft.ownerOf(1))
                 .to.be.revertedWith("ERC721: invalid token ID");            
-        })
+        });
     });
 });

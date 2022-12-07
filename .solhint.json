@@ -1,3 +1,9 @@
 {
-  "extends": "solhint:default"
+  "extends": "solhint:recommended",
+  "rules": {
+    "reason-string": ["warn",{"maxLength":55}],
+    "func-visibility": ["warn",{"ignoreConstructors":true}],
+    "no-empty-blocks": "off",
+    "compiler-version": ["error","0.8.16"]
+  }
 }

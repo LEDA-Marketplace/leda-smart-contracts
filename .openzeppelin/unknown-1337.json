@@ -2,18 +2,8 @@
   "manifestVersion": "3.2",
   "proxies": [
     {
-      "address": "0x610178dA211FEF7D417bC0e6FeD39F05609AD788",
-      "txHash": "0xc3d24a324a63ecc4870d145d47e679b0c76994bfa0cad5a2d43a5d67cb12777e",
-      "kind": "uups"
-    },
-    {
       "address": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
       "txHash": "0xa5d20037979ac2960f9f845f79211810df149f0254dce763136328fdbbca8f3a",
-      "kind": "uups"
-    },
-    {
-      "address": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
-      "txHash": "0x1d77092f58f20e343c37eca8c96ddd67541af7e55aca3b5cc862f0cfa5702c00",
       "kind": "uups"
     },
     {
@@ -43,29 +33,49 @@
     },
     {
       "address": "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
-      "txHash": "0x447d147e9be48ac1e6e1257207435d52d6817d480632a3a2bf3cab006e756a47",
+      "txHash": "0x2ad9529570fb19aab9e41a6d6b17595c09a608cd9c8efb849966ba750bd33b62",
+      "kind": "uups"
+    },
+    {
+      "address": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+      "txHash": "0x25c46c63c7deeaed2f9f2c565f45472f22cebb07ec706b256bb458a0cf9f8671",
+      "kind": "uups"
+    },
+    {
+      "address": "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853",
+      "txHash": "0x561956387da8d1433955b3620c55b643ec88704901cd24afdea9f87e0cea5036",
+      "kind": "uups"
+    },
+    {
+      "address": "0x610178dA211FEF7D417bC0e6FeD39F05609AD788",
+      "txHash": "0x0c284b1b088a35851b7fe5822d2e823b4a59790d0887dfd6ae8c218b26aee159",
+      "kind": "uups"
+    },
+    {
+      "address": "0x0B306BF915C4d645ff596e518fAf3F9669b97016",
+      "txHash": "0x9170cd262af1d827959e528195ec1b5453c621deeb7f90f78513679791a7dcea",
       "kind": "uups"
     },
     {
       "address": "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6",
-      "txHash": "0xd1a81ec902383e98939df25a537424e04551118e049c45d304fbbf71a55d470e",
+      "txHash": "0xb1820ce28a2bf59bd65749ff37844a39a087e394eaa227d90e8211fd7ae60c28",
       "kind": "uups"
     },
     {
       "address": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
-      "txHash": "0x4776128178b6b23e22bf95630b7ed38a0be0e800d221e5469569f29caf864a26",
+      "txHash": "0x3cb63e09a860ff2fc3fab146306756fdcd276fbd765b298803c385c1f24d19a7",
       "kind": "uups"
     },
     {
       "address": "0x959922bE3CAee4b8Cd9a407cc3ac1C251C2007B1",
-      "txHash": "0xfdf57163f3d3899ba0c84f96af41406bb2ba66f6b1f48d509c2bc95fcd4c293f",
+      "txHash": "0xf1ace7ddf5710876b1283045a3c6fa2f91ee88927d95491f2173f2559fc0cc23",
       "kind": "uups"
     }
   ],
   "impls": {
-    "92b144c51be378b219fc2146019aa93ac4ba16a83c0bb5c4b7c5076b48699d8c": {
+    "a587ed62844487861ea0aaa8046745084a79cd1eca801a6c579680ddb4d39763": {
       "address": "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853",
-      "txHash": "0x0da1b4aa26bca7978e660b19a5454af3267919e914983427db3cd5c0d9809667",
+      "txHash": "0x3e92db2f794c92c05f0bfe54f695171491fd0d1e198d0d410e34353be0279875",
       "layout": {
         "solcVersion": "0.8.16",
         "storage": [
@@ -127,33 +137,9 @@
             "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:94"
           },
           {
-            "label": "__gap",
-            "offset": 0,
-            "slot": "201",
-            "type": "t_array(t_uint256)50_storage",
-            "contract": "ERC721HolderUpgradeable",
-            "src": "@openzeppelin/contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol:40"
-          },
-          {
-            "label": "_status",
-            "offset": 0,
-            "slot": "251",
-            "type": "t_uint256",
-            "contract": "ReentrancyGuardUpgradeable",
-            "src": "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol:38"
-          },
-          {
-            "label": "__gap",
-            "offset": 0,
-            "slot": "252",
-            "type": "t_array(t_uint256)49_storage",
-            "contract": "ReentrancyGuardUpgradeable",
-            "src": "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol:74"
-          },
-          {
             "label": "_paused",
             "offset": 0,
-            "slot": "301",
+            "slot": "201",
             "type": "t_bool",
             "contract": "PausableUpgradeable",
             "src": "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol:29"
@@ -161,26 +147,50 @@
           {
             "label": "__gap",
             "offset": 0,
-            "slot": "302",
+            "slot": "202",
             "type": "t_array(t_uint256)49_storage",
             "contract": "PausableUpgradeable",
             "src": "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol:116"
           },
           {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "251",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ERC721HolderUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol:40"
+          },
+          {
+            "label": "_status",
+            "offset": 0,
+            "slot": "301",
+            "type": "t_uint256",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol:38"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "302",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol:80"
+          },
+          {
             "label": "itemsCount",
             "offset": 0,
             "slot": "351",
-            "type": "t_struct(Counter)1465_storage",
+            "type": "t_struct(Counter)1560_storage",
             "contract": "Marketplace",
-            "src": "contracts/Marketplace.sol:35"
+            "src": "contracts/Marketplace.sol:24"
           },
           {
             "label": "itemsSold",
             "offset": 0,
             "slot": "352",
-            "type": "t_struct(Counter)1465_storage",
+            "type": "t_struct(Counter)1560_storage",
             "contract": "Marketplace",
-            "src": "contracts/Marketplace.sol:36"
+            "src": "contracts/Marketplace.sol:25"
           },
           {
             "label": "feePercentage",
@@ -188,7 +198,7 @@
             "slot": "353",
             "type": "t_uint256",
             "contract": "Marketplace",
-            "src": "contracts/Marketplace.sol:44"
+            "src": "contracts/Marketplace.sol:33"
           },
           {
             "label": "listingFeePercentage",
@@ -196,15 +206,15 @@
             "slot": "354",
             "type": "t_uint256",
             "contract": "Marketplace",
-            "src": "contracts/Marketplace.sol:45"
+            "src": "contracts/Marketplace.sol:34"
           },
           {
             "label": "items",
             "offset": 0,
             "slot": "355",
-            "type": "t_mapping(t_uint256,t_struct(Item)6497_storage)",
+            "type": "t_mapping(t_uint256,t_struct(Item)6477_storage)",
             "contract": "Marketplace",
-            "src": "contracts/Marketplace.sol:66"
+            "src": "contracts/Marketplace.sol:55"
           }
         ],
         "types": {
@@ -228,7 +238,7 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_enum(item_status)6479": {
+          "t_enum(item_status)6459": {
             "label": "enum Marketplace.item_status",
             "members": [
               "Not_Listed",
@@ -237,11 +247,11 @@
             ],
             "numberOfBytes": "1"
           },
-          "t_mapping(t_uint256,t_struct(Item)6497_storage)": {
+          "t_mapping(t_uint256,t_struct(Item)6477_storage)": {
             "label": "mapping(uint256 => struct Marketplace.Item)",
             "numberOfBytes": "32"
           },
-          "t_struct(Counter)1465_storage": {
+          "t_struct(Counter)1560_storage": {
             "label": "struct CountersUpgradeable.Counter",
             "members": [
               {
@@ -253,7 +263,7 @@
             ],
             "numberOfBytes": "32"
           },
-          "t_struct(Item)6497_storage": {
+          "t_struct(Item)6477_storage": {
             "label": "struct Marketplace.Item",
             "members": [
               {
@@ -300,7 +310,7 @@
               },
               {
                 "label": "status",
-                "type": "t_enum(item_status)6479",
+                "type": "t_enum(item_status)6459",
                 "offset": 0,
                 "slot": "7"
               }
@@ -318,9 +328,9 @@
         }
       }
     },
-    "81a5efacb742f27b1614135aa7efd8eacb908cac5a7bf75dea9bd51e130b5922": {
+    "945ef9d310e2622a38cc2e5068abcd39e4ee95feb2e4c7735975aae67610a364": {
       "address": "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
-      "txHash": "0xe1dcf4b402a29292b19e44c508ba17b40a295a07b7d17d0dbbbf416ba5f36f92",
+      "txHash": "0x8d2fc3c5d15cd5bc9ab38661e739c3bb823ca6a4903304b93d5cee5f78df5d11",
       "layout": {
         "solcVersion": "0.8.16",
         "storage": [
@@ -382,33 +392,9 @@
             "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:94"
           },
           {
-            "label": "__gap",
-            "offset": 0,
-            "slot": "201",
-            "type": "t_array(t_uint256)50_storage",
-            "contract": "ERC721HolderUpgradeable",
-            "src": "@openzeppelin/contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol:40"
-          },
-          {
-            "label": "_status",
-            "offset": 0,
-            "slot": "251",
-            "type": "t_uint256",
-            "contract": "ReentrancyGuardUpgradeable",
-            "src": "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol:38"
-          },
-          {
-            "label": "__gap",
-            "offset": 0,
-            "slot": "252",
-            "type": "t_array(t_uint256)49_storage",
-            "contract": "ReentrancyGuardUpgradeable",
-            "src": "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol:74"
-          },
-          {
             "label": "_paused",
             "offset": 0,
-            "slot": "301",
+            "slot": "201",
             "type": "t_bool",
             "contract": "PausableUpgradeable",
             "src": "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol:29"
@@ -416,26 +402,50 @@
           {
             "label": "__gap",
             "offset": 0,
-            "slot": "302",
+            "slot": "202",
             "type": "t_array(t_uint256)49_storage",
             "contract": "PausableUpgradeable",
             "src": "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol:116"
           },
           {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "251",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ERC721HolderUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol:40"
+          },
+          {
+            "label": "_status",
+            "offset": 0,
+            "slot": "301",
+            "type": "t_uint256",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol:38"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "302",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol:80"
+          },
+          {
             "label": "itemsCount",
             "offset": 0,
             "slot": "351",
-            "type": "t_struct(Counter)1465_storage",
+            "type": "t_struct(Counter)1560_storage",
             "contract": "Marketplace",
-            "src": "contracts/Marketplace.sol:35"
+            "src": "contracts/Marketplace.sol:24"
           },
           {
             "label": "itemsSold",
             "offset": 0,
             "slot": "352",
-            "type": "t_struct(Counter)1465_storage",
+            "type": "t_struct(Counter)1560_storage",
             "contract": "Marketplace",
-            "src": "contracts/Marketplace.sol:36"
+            "src": "contracts/Marketplace.sol:25"
           },
           {
             "label": "feePercentage",
@@ -443,7 +453,7 @@
             "slot": "353",
             "type": "t_uint256",
             "contract": "Marketplace",
-            "src": "contracts/Marketplace.sol:44"
+            "src": "contracts/Marketplace.sol:33"
           },
           {
             "label": "listingFeePercentage",
@@ -451,15 +461,15 @@
             "slot": "354",
             "type": "t_uint256",
             "contract": "Marketplace",
-            "src": "contracts/Marketplace.sol:45"
+            "src": "contracts/Marketplace.sol:34"
           },
           {
             "label": "items",
             "offset": 0,
             "slot": "355",
-            "type": "t_mapping(t_uint256,t_struct(Item)6497_storage)",
+            "type": "t_mapping(t_uint256,t_struct(Item)6477_storage)",
             "contract": "Marketplace",
-            "src": "contracts/Marketplace.sol:66"
+            "src": "contracts/Marketplace.sol:55"
           }
         ],
         "types": {
@@ -483,7 +493,7 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_enum(item_status)6479": {
+          "t_enum(item_status)6459": {
             "label": "enum Marketplace.item_status",
             "members": [
               "Not_Listed",
@@ -492,11 +502,11 @@
             ],
             "numberOfBytes": "1"
           },
-          "t_mapping(t_uint256,t_struct(Item)6497_storage)": {
+          "t_mapping(t_uint256,t_struct(Item)6477_storage)": {
             "label": "mapping(uint256 => struct Marketplace.Item)",
             "numberOfBytes": "32"
           },
-          "t_struct(Counter)1465_storage": {
+          "t_struct(Counter)1560_storage": {
             "label": "struct CountersUpgradeable.Counter",
             "members": [
               {
@@ -508,7 +518,7 @@
             ],
             "numberOfBytes": "32"
           },
-          "t_struct(Item)6497_storage": {
+          "t_struct(Item)6477_storage": {
             "label": "struct Marketplace.Item",
             "members": [
               {
@@ -555,7 +565,7 @@
               },
               {
                 "label": "status",
-                "type": "t_enum(item_status)6479",
+                "type": "t_enum(item_status)6459",
                 "offset": 0,
                 "slot": "7"
               }

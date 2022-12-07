@@ -4,23 +4,11 @@ import { Contract, BigNumber, utils} from "ethers";
 const { LazyLedaMinter } = require('../lib')
 const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers");
 
-const URI:string = "sample URI";
-const feePercent = 1;
 const toWei = (num:number) => ethers.utils.parseEther(num.toString())
 const fromWei = (num:number) => ethers.utils.formatEther(num)
 const ipfs = "ipfs://bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi";
+const zeroAddress = "0x0000000000000000000000000000000000000000";
 const feeDenominator = 1000;
-
-async function marketplaceFixture() {
-        const [owner, minterOne, minterTwo, buyer, seller, buyerTwo] = await ethers.getSigners();
-        
-        const LedaNFT = await ethers.getContractFactory("LedaNFT");
-        const ledaNft = await LedaNFT.deploy("Leda NFTs", "LEDA");
-
-        await ledaNft.deployed();
-        
-        return { ledaNft, owner, minterOne, minterTwo, buyer, seller, buyerTwo}
-}
 
 async function deploy() {
     const [minter, buyer, seller, _] = await ethers.getSigners();
@@ -35,7 +23,7 @@ async function deploy() {
     return { minter, buyer, seller, ledaNft, redeemerContract }
 }
 
-describe("JupApes Contract Testing", () => { 
+describe("LedaNFT Contract Testing", () => { 
     describe("LazyNFT", function() {
         it("Should deploy", async function() {
             const signers = await ethers.getSigners();
@@ -46,24 +34,23 @@ describe("JupApes Contract Testing", () => {
             await ledaNft.deployed();
         });
 
-         it("Should redeem an NFT from a signed voucher", async () => {
+         it("Should redeem an NFT in Pinata from a signed voucher", async () => {
             const { ledaNft, redeemerContract, buyer, minter} = await loadFixture(deploy);
 
             const lazyMinter = new LazyLedaMinter( ledaNft, minter );
             const minPrice = 100000000000000;
-            const royalties = 10;
+            const royalties = 50;
             const voucher = 
                 await lazyMinter.createVoucher(
                     "https://chocolate-impressed-bandicoot-860.mypinata.cloud/ipfs/Qmc1XcZiodoRb9UVyi3ChagkyN5GN9xRcYhUrdLaKx6oi1",
                     minPrice,
                     "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
-                    10
+                    royalties
                 );
-            //console.log(voucher);
-            //console.log(ledaNft.address);
+            
             await expect(redeemerContract.redeem(buyer.address, voucher, { value: minPrice }))
                 .to.emit(ledaNft, 'Transfer')  // transfer from null address to minter
-                .withArgs('0x0000000000000000000000000000000000000000', minter.address, 1)
+                .withArgs(zeroAddress, minter.address, 1)
                 .and.to.emit(ledaNft, 'Transfer') // transfer from minter to redeemer
                 .withArgs(minter.address, buyer.address, 1);
 
@@ -87,7 +74,7 @@ describe("JupApes Contract Testing", () => {
   
             await expect(redeemerContract.redeem(buyer.address, voucher))
                 .to.emit(ledaNft, 'Transfer')  // transfer from null address to minter
-                .withArgs('0x0000000000000000000000000000000000000000', minter.address, 1)
+                .withArgs(zeroAddress, minter.address, 1)
                 .and.to.emit(ledaNft, 'Transfer') // transfer from minter to redeemer
                 .withArgs(minter.address, buyer.address, 1);
 
@@ -111,7 +98,7 @@ describe("JupApes Contract Testing", () => {
 
             await expect(redeemerContract.redeem(buyer.address, voucher))
                 .to.emit(ledaNft, 'Transfer')  // transfer from null address to minter
-                .withArgs('0x0000000000000000000000000000000000000000', minter.address, 1)
+                .withArgs(zeroAddress, minter.address, 1)
                 .and.to.emit(ledaNft, 'Transfer') // transfer from minter to redeemer
                 .withArgs(minter.address, buyer.address, 1);
 
@@ -119,7 +106,60 @@ describe("JupApes Contract Testing", () => {
                 .to.be.revertedWith('The voucher has been redeemed!');
         });
 
-        
+        it("Should fail to redeem a voucher if minter address is equal to zero", async () => {
+            const { ledaNft, redeemerContract, buyer, minter} = await loadFixture(deploy);
+
+            const lazyMinter = new LazyLedaMinter(ledaNft, minter);
+            const minPrice = 0;
+            const royalties = 50;
+            const voucher = 
+                await lazyMinter.createVoucher(
+                    ipfs,
+                    minPrice,
+                    zeroAddress,
+                    royalties
+                );
+
+            await expect(redeemerContract.redeem(buyer.address, voucher))
+                .to.be.revertedWith('Creator is the zero address!');
+        });
+
+        it("Should fail if royalties are greater than the max fee percentage", async () => {
+            const { ledaNft, redeemerContract, buyer, minter} = await loadFixture(deploy);
+
+            const lazyMinter = new LazyLedaMinter(ledaNft, minter);
+            const minPrice = 0;
+            const royalties = 51;
+            const voucher = 
+                await lazyMinter.createVoucher(
+                    ipfs,
+                    minPrice,
+                    zeroAddress,
+                    royalties
+                );
+
+            await expect(redeemerContract.redeem(buyer.address, voucher))
+                .to.be.revertedWith('Royalties exceed the max royalty lazy fees percentage');
+        });
+
+        it("Should fail to redeem a voucher if buyer address is equal to zero", async () => {
+            const { ledaNft, redeemerContract, buyer, minter} = await loadFixture(deploy);
+
+            const lazyMinter = new LazyLedaMinter(ledaNft, minter);
+            const minPrice = 0;
+            const royalties = 50;
+            const voucher = 
+                await lazyMinter.createVoucher(
+                    ipfs,
+                    minPrice,
+                    minter.address,
+                    royalties
+                );
+
+            await expect(redeemerContract.redeem(zeroAddress, voucher))
+                .to.be.revertedWith('Redeemer is the zero address!');
+        });
+
         it("Should fail to redeem a voucher signed by an unauthorized account", async () => {
             const { ledaNft, redeemerContract, buyer, minter} = await loadFixture(deploy);
 
@@ -131,7 +171,7 @@ describe("JupApes Contract Testing", () => {
             const royalties = 50;
             const voucher = 
                 await lazyMinter.createVoucher(
-                    "ipfs://bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
+                    ipfs,
                     minPrice,
                     minter.address,
                     royalties
@@ -152,7 +192,7 @@ describe("JupApes Contract Testing", () => {
             const royalties = 50;
             const voucher = 
                 await lazyMinter.createVoucher(
-                    "ipfs://bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
+                    ipfs,
                     minPrice,
                     rando.address,
                     royalties
@@ -199,7 +239,7 @@ describe("JupApes Contract Testing", () => {
 
             await expect(redeemerContract.redeem(buyer.address, voucher, { value: minPrice }))
                 .to.emit(ledaNft, 'Transfer')  // transfer from null address to minter
-                .withArgs('0x0000000000000000000000000000000000000000', seller.address, 1)
+                .withArgs(zeroAddress, seller.address, 1)
                 .and.to.emit(ledaNft, 'Transfer') // transfer from minter to redeemer
                 .withArgs(seller.address, buyer.address, 1);
         });
@@ -221,6 +261,36 @@ describe("JupApes Contract Testing", () => {
             const payment = minPrice.sub(1)
             await expect(redeemerContract.redeem(buyer.address, voucher, { value: payment }))
             .to.be.revertedWith('Insufficient funds to redeem')
+        });
+
+        it("Should be possible to increase the lazy minting royalty fees percentage", async () => {
+            const { ledaNft, redeemerContract, buyer, minter} = await loadFixture(deploy);
+
+            const lazyMinter = new LazyLedaMinter(ledaNft, minter);
+            const minPrice = 0;
+            const royalties = 51;
+            const voucher = 
+                await lazyMinter.createVoucher(
+                    ipfs,
+                    minPrice,
+                    minter.address,
+                    royalties
+                );
+
+            await expect(ledaNft.setLazyMintingFee(royalties))
+            .to.emit(ledaNft, "LogSetLazyMintingFee")
+            .withArgs(
+                royalties
+            );
+
+            await expect(redeemerContract.redeem(buyer.address, voucher, { value: minPrice }))
+                .to.emit(ledaNft, 'Transfer')  // transfer from null address to minter
+                .withArgs(zeroAddress, minter.address, 1)
+                .and.to.emit(ledaNft, 'Transfer') // transfer from minter to redeemer
+                .withArgs(minter.address, buyer.address, 1);
+
+            const nftOwner = await redeemerContract.ownerOf(1);
+            expect(nftOwner).to.equal(buyer.address);
         });
 
         it("Should make payments available to minter for withdrawal", async function() {
@@ -328,7 +398,6 @@ describe("JupApes Contract Testing", () => {
             expect(await ledaNft.getContractBalance()).to.equal(0);
             expect(await ledaNft.totalSupply()).to.equal(3);
 
-            console.log(await ledaNft.getChainID());
         });
     });
 });

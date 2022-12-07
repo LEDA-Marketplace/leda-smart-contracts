@@ -11,6 +11,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/common/ERC2981.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/draft-EIP712.sol";
+import "./JupApesVoucher.sol";
 
 contract JupApesNFT is 
         ERC721,
@@ -18,34 +19,28 @@ contract JupApesNFT is
         EIP712,
         AccessControl,
         ReentrancyGuard,
-        ERC721URIStorage, 
+        ERC721URIStorage,
+        ERC721Burnable,
+        JupApesVoucher,
         Pausable,
         Ownable
 {
-      
-    struct NFTVoucher {
-        uint256 tokenId;
-        uint256 minPrice;
-        string uri;
-        bytes signature;
-    }
 
     mapping(uint => uint) public stakingRewardsPercentage;
-    mapping (address => uint256) pendingWithdrawals;
     
     // This means that the maximun amount is 10%
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
-    string private constant SIGNING_DOMAIN = "LazyNFT-Voucher";
-    string private constant SIGNATURE_VERSION = "1";
 
     uint public constant MAX_ROYALTIES_PERCENTAGE = 100;
     uint public constant CAP_VALUE = 10000;
-    uint private tokenCount;
+    uint public tokenCount;
 
     event LogNFTMinted(
         uint _nftId,
         address _owner,
-        string _nftURI
+        string _nftURI,
+        uint _royaltiesPercentage,
+        uint _stakingRewardsPercentage
     );
 
     modifier onlyValidRoyalty(uint _royaltyPercentage) {
@@ -54,23 +49,28 @@ contract JupApesNFT is
             "Royalties percentage should be equal or lesss than 10%"
         );
         _;
-    } 
+    }
+
+    modifier validReceiverAddress(address _to) {
+        require(_to != address(0), 
+        "Receiver is the zero address");
+        _;
+    }
 
     constructor(
-            string memory name, 
-            string memory symbol
+            string memory _nameNFT,
+            string memory _symbolNFT
         )
-        ERC721(name, symbol)
-        EIP712(SIGNING_DOMAIN, SIGNATURE_VERSION) 
+        ERC721(_nameNFT, _symbolNFT)
         {
             _setupRole(MINTER_ROLE, msg.sender);
         }
 
-    function pause() public onlyOwner {
+    function pause() external onlyOwner {
         _pause();
     }
 
-    function unpause() public onlyOwner {
+    function unpause() external onlyOwner {
         _unpause();
     }
 
@@ -79,12 +79,14 @@ contract JupApesNFT is
             string memory _tokenURI,
             uint96 _royaltiesPercentage,
             uint _stakingRewardsPercentage,
-            uint tokenId
+            uint _tokenId
         )
         external
         nonReentrant
         whenNotPaused
         onlyOwner
+        validReceiverAddress(_to)
+        onlyValidRoyalty(_royaltiesPercentage)
         returns(uint) 
     {
 
@@ -94,86 +96,56 @@ contract JupApesNFT is
         );
 
         require(
-            tokenId > 0, 
+            _tokenId > 0, 
             "tokenId should be greater than zero!"
         );
 
-        require(
-            !_exists(tokenId), 
-            "tokenId has been created!"
-        );
+        stakingRewardsPercentage[_tokenId] = _stakingRewardsPercentage;
 
-        require(
-            _to != address(0), 
-            "Receiver can't be the zero address"
+        emit LogNFTMinted(
+                _tokenId, 
+                msg.sender, 
+                _tokenURI, 
+                _royaltiesPercentage, 
+                _stakingRewardsPercentage
         );
-        
-        // verify if we need to imcrement the Id
-        // tokenCount.increment(); 
-        // uint tokenId = tokenCount.current();
-        stakingRewardsPercentage[tokenId] = _stakingRewardsPercentage;
-        emit LogNFTMinted(tokenId, msg.sender, _tokenURI);
         tokenCount++;
-        _setTokenRoyalty(tokenId, msg.sender, _royaltiesPercentage);
-        _safeMint(_to, tokenId);
-        _setTokenURI(tokenId, _tokenURI);
+        _setTokenRoyalty(_tokenId, msg.sender, _royaltiesPercentage);
+        _safeMint(_to, _tokenId);
+        _setTokenURI(_tokenId, _tokenURI);
                
-        return(tokenId);
+        return(_tokenId);
     }
 
     function redeem(address redeemer, NFTVoucher calldata voucher) 
-        public 
-        payable 
+        external 
+        payable
+        nonReentrant
+        validReceiverAddress(redeemer)
+        onlyValidRoyalty(voucher.royalties)
         returns (uint256) 
     {
         address signer = _verify(voucher);
 
-        require(hasRole(MINTER_ROLE, signer), "Signature invalid or unauthorized");
+        require(
+            hasRole(MINTER_ROLE, signer), 
+            "Signature invalid or unauthorized"
+        );
 
-        require(msg.value >= voucher.minPrice, "Insufficient funds to redeem");
+        require(
+            msg.value >= voucher.minPrice, 
+            "Insufficient funds to redeem"
+        );
 
         tokenCount++;
-        //add royalties
+        stakingRewardsPercentage[voucher.tokenId] = voucher.stakingRewards;
+        _setTokenRoyalty(voucher.tokenId, signer, uint96(voucher.royalties));
         _safeMint(signer, voucher.tokenId);
         _setTokenURI(voucher.tokenId, voucher.uri);
-        _transfer(signer, redeemer, voucher.tokenId);
 
-        pendingWithdrawals[signer] += msg.value;
+        _safeTransfer(signer, redeemer, voucher.tokenId, "");
 
         return voucher.tokenId;
-    }
-
-    /// @notice Returns a hash of the given NFTVoucher, prepared using EIP712 typed data hashing rules.
-    /// @param voucher An NFTVoucher to hash.
-    function _hash(NFTVoucher calldata voucher) 
-        internal 
-        view 
-        returns (bytes32) 
-    {
-        return _hashTypedDataV4(keccak256(abi.encode(
-            keccak256("NFTVoucher(uint256 tokenId,uint256 minPrice,string uri)"),
-            voucher.tokenId,
-            voucher.minPrice,
-            keccak256(bytes(voucher.uri))
-        )));
-    }
-
-    // Do I need this???
-    function getChainID() external view returns (uint256) {
-        uint256 id;
-        assembly {
-            id := chainid()
-        }
-        return id;
-    }
-
-    function _verify(NFTVoucher calldata voucher) 
-        internal 
-        view 
-        returns (address) 
-    {
-        bytes32 digest = _hash(voucher);
-        return ECDSA.recover(digest, voucher.signature);
     }
 
     // The following functions are overrides required by Solidity.
@@ -200,6 +172,23 @@ contract JupApesNFT is
         returns (bool)
     {
         return super.supportsInterface(interfaceId) || AccessControl.supportsInterface(interfaceId);
+    }
+
+    function getContractBalance()
+        external
+        view
+        returns(uint)
+    {
+        return address(this).balance;
+    }
+
+
+    function withdraw() 
+        external
+        onlyOwner
+        nonReentrant
+    {
+        payable(owner()).transfer(address(this).balance);
     }
 
     function _feeDenominator() 

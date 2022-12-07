@@ -9,6 +9,7 @@ const marketplaceFeePercent = 30;
 const creatorFeePercentage = 25;
 const toWei = (num:number) => ethers.utils.parseEther(num.toString());
 const fromWei = (num:number) => ethers.utils.formatEther(num);
+const zeroAddress = "0x0000000000000000000000000000000000000000";
 const Not_Listed = 0;
 const Listed = 1;
 const Sold = 2;
@@ -469,7 +470,6 @@ describe("Marketplace Contract Testing", () => {
             const {ledaNft, proxy, minterOne, buyerOne} = await loadFixture(marketplaceFixture);
             await ledaNft.connect(minterOne).mint(URI, creatorFeePercentage);
 
-            const zeroAddress = "0x0000000000000000000000000000000000000000";
             await ledaNft.connect(minterOne).setApprovalForAll(proxy.address, true);
             
             await expect(proxy.connect(minterOne).makeItem(zeroAddress, 1, price))

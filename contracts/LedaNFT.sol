@@ -13,8 +13,6 @@ import "@openzeppelin/contracts/token/common/ERC2981.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/draft-EIP712.sol";
 
-import "hardhat/console.sol";
-
 contract LedaNFT is 
         ERC721,
         ERC2981,
@@ -42,14 +40,16 @@ contract LedaNFT is
 
     string private constant SIGNING_DOMAIN = "LazyLeda-Voucher";
     string private constant SIGNATURE_VERSION = "1";
-    uint constant TO_PERCENTAGE = 1000;
+    uint private constant TO_PERCENTAGE = 1000;
     uint public maxCreatorRoyalties;
     uint public lazyMintingFee; 
 
     event LogNFTMinted( uint _nftId, address _owner, string _nftURI, uint _royalties);
+    event LogSetMaxCreatorRoyalties(uint newMaxCreatorRoyalties);
+    event LogSetLazyMintingFee(uint newLazyMintingFee);
     
-    constructor(string memory name, string memory symbol) 
-        ERC721(name, symbol)
+    constructor(string memory _nameLeda, string memory _symbolLeda) 
+        ERC721(_nameLeda, _symbolLeda)
         EIP712(SIGNING_DOMAIN, SIGNATURE_VERSION) 
     {
         // Maximun royalties percentage is 10%
@@ -59,10 +59,15 @@ contract LedaNFT is
     }
 
     function setMaxCreatorRoyalties(uint _maxCreatorRoyalties)
+        external
         onlyOwner
-        external 
     {
+        require(
+                _maxCreatorRoyalties <= TO_PERCENTAGE, 
+                "Creator royalties cannot be greater than 100%"
+        );
         maxCreatorRoyalties = _maxCreatorRoyalties;
+        emit LogSetMaxCreatorRoyalties(_maxCreatorRoyalties);
     }
 
     function pause() external onlyOwner {
@@ -76,22 +81,12 @@ contract LedaNFT is
     // Royalties should be received as an integer number
     // i.e., if royalties are 2.5% this contract should receive 25
     function mint(string memory _tokenURI, uint96 _royaltiesPercentage)
+        external
         whenNotPaused
         nonReentrant
-        public 
         returns(uint) 
     {
-        /*require(
-            _royaltiesPercentage <= maxCreatorRoyalties, 
-            "Royalties percentage exceeds the maximum value!"
-        );
-
-        tokenCount.increment();
-        uint tokenId = tokenCount.current();
-
-        _setTokenRoyalty(tokenId, msg.sender, _royaltiesPercentage);
-        _safeMint(msg.sender, tokenId);
-        _setTokenURI(tokenId, _tokenURI);*/
+      
         (bool success, uint tokenId) = 
             mintNFT(msg.sender, _tokenURI, _royaltiesPercentage);
 
@@ -105,7 +100,11 @@ contract LedaNFT is
         return(tokenId);
     }
 
-    function mintNFT(address _newOwner, string memory _tokenURI, uint96 _royaltiesPercentage) 
+    function mintNFT(
+            address _newOwner, 
+            string memory _tokenURI, 
+            uint96 _royaltiesPercentage
+        ) 
         private
         returns (bool, uint)
     {
@@ -126,7 +125,7 @@ contract LedaNFT is
 
     // Add Lazy Minting Feature
     function redeem(address redeemer, NFTVoucher calldata voucher)
-        public
+        external
         payable
         nonReentrant
         returns (uint256) 
@@ -137,7 +136,22 @@ contract LedaNFT is
         );
 
         require(
-            msg.value >= voucher.minPrice, 
+            redeemer != address(0), 
+            "Redeemer is the zero address!"
+        );
+
+        require(
+            voucher.royalties <= lazyMintingFee,
+            "Royalties exceed the max royalty lazy fees percentage"
+        );
+
+        require(
+            voucher.creator != address(0),
+            "Creator is the zero address!"
+        );
+
+        require(
+            voucher.minPrice <= msg.value, 
             "Insufficient funds to redeem"
         );
 
@@ -158,23 +172,28 @@ contract LedaNFT is
         );
         _safeTransfer(signer, redeemer, tokenId, "");
    
-        uint profits = getProfits(msg.value);
+        uint profits = getCreatorProfits(msg.value);
         payable(signer).transfer(profits);
         
         return tokenId;
     }
 
     function setLazyMintingFee(uint _lazyMintingFee) 
-        onlyOwner 
         external
+        onlyOwner
     {
-        // This means that the maximun amount is 10%
+        // This means that the maximun amount is 100%
+        require(
+            _lazyMintingFee <= TO_PERCENTAGE, 
+            "Lazy Minting Fees cannot be greater than 100%"
+        );
         lazyMintingFee = _lazyMintingFee;
+        emit LogSetLazyMintingFee(_lazyMintingFee);
     }
 
-    function getProfits(uint _receivedAmount)
-        view 
+    function getCreatorProfits(uint _receivedAmount)
         internal
+        view 
         returns(uint)
     {
         uint _platformFees;
@@ -223,9 +242,6 @@ contract LedaNFT is
         payable(owner()).transfer(address(this).balance);
     }
 
-    // End Lazy minting feature
-    
-    // Do I need this???
     function getChainID() external view returns (uint256) {
         uint256 id;
         assembly {
@@ -233,8 +249,6 @@ contract LedaNFT is
         }
         return id;
     }
-
-    
 
     function tokenURI(uint256 tokenId)
         public
