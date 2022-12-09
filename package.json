@@ -4,7 +4,8 @@
     "start": "hardhat node",
     "compile": "hardhat compile",
     "deploy:localhost": "hardhat run scripts/deploy.ts --network localhost",
-    "deploy:jupApes": "hardhat run scripts/deploy_jup_apes.ts --network localhost",
+    "deployJup:localhost": "hardhat run scripts/deploy_jup_apes.ts --network localhost",
+    "deployJup:testnet": "hardhat run scripts/deploy_jup_apes.ts --network goerli",
     "deploy:testnet": "hardhat run scripts/deploy.ts --network goerli",
     "deployProxy:localhost": "hardhat run scripts/deploy_proxy.ts --network localhost",
     "deployProxy:testnet": "hardhat run scripts/deploy_proxy.ts --network goerli",
@@ -29,8 +30,12 @@
   "dependencies": {
     "@openzeppelin/contracts": "4.7.3",
     "@openzeppelin/contracts-upgradeable": "^4.7.3",
+    "@pinata/sdk": "^2.1.0",
     "@typechain/ethers-v5": "^10.1.1",
+    "axios": "^1.2.1",
     "dotenv": "16.0.2",
+    "form-data": "^4.0.0",
+    "fs": "^0.0.1-security",
     "hardhat-gas-reporter": "^1.0.9",
     "solidity-coverage": "^0.8.2",
     "typechain": "^8.1.1"

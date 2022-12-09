@@ -44,6 +44,7 @@ describe("JupApes Contract Testing", () => {
             const receipt = await tx1.wait();
             
             expect(receipt.events[0].args._nftId).to.equal(_tokenId);
+            expect(receipt.events[0].args._sender).to.equal(minter.address);
             expect(receipt.events[0].args._owner).to.equal(_to);
             expect(receipt.events[0].args._nftURI).to.equal(ipfs);
             expect(receipt.events[0].args._royaltiesPercentage).to.equal(_creatorFeePercent);
@@ -333,6 +334,7 @@ describe("JupApes Contract Testing", () => {
 
             const royaltiesValue = minPrice.mul(_creatorFeePercent).div(feeDenominator);
             expect(_royalties).to.equal(royaltiesValue);
+            expect(_creator).to.equal(minter.address)
         });
 
         it("Should validate if the NFT staking rewards are in place", async () => {
@@ -420,7 +422,8 @@ describe("JupApes Contract Testing", () => {
             await expect(redeemerContract.redeem(buyer.address, voucher))
                 .to.be.revertedWith('Signature invalid or unauthorized');
         });
-        
+
+       
         it("Should fail to redeem an NFT voucher that's been modified", async function() {
             const { jupApes, redeemerContract, buyer, minter} = await loadFixture(deploy);
 
@@ -564,7 +567,6 @@ describe("JupApes Contract Testing", () => {
 
             const totalProfits = minPrice.mul(6);
 
-            //const contractBalance = minPrice.mul(6).sub(totalProfits);
             expect(await jupApes.getContractBalance()).to.equal(totalProfits);
 
             // withdrawal should increase minter's balance
