@@ -171,9 +171,7 @@ describe("Marketplace Contract Testing", () => {
                     minterOne.address,
                     minterOne.address
             )
-            //
             
-
             // Owner of NFT should now be the marketplace
             expect(await ledaNft.ownerOf(1)).to.equal(proxy.address);
             // Item count should now equal 1
@@ -433,7 +431,164 @@ describe("Marketplace Contract Testing", () => {
             expect(await proxy.getContractBalance()).to.equal(0);
             const newBalance = await owner.getBalance();
             expect(await owner.getBalance()).to.equal(initBalance.sub(gasPaid).add(firstSaleFees).add(secondSaleFees));
-        }); 
+        });
+    });
+
+    describe("Should include JupApe Contract", () => {
+        it("should be able to list Jup Apes!", async () => {
+            const {ledaNft, owner, proxy, minterOne, minterTwo, buyerOne} = await loadFixture(marketplaceFixture);
+
+            const JupApes = await ethers.getContractFactory("JupApesNFT");
+            const jupApes = await JupApes.deploy("JupApes NFT Collection", "JUPS");
+            await jupApes.deployed();
+
+            const stakingRewardsPercentage = 50;
+            const tokenId = 1;
+            await jupApes.connect(owner).mint(
+                owner.address,
+                URI, 
+                creatorFeePercentage, 
+                stakingRewardsPercentage,
+                tokenId
+            );
+
+            expect(await jupApes.tokenCount()).to.equal(1);     
+
+            await jupApes.connect(owner).setApprovalForAll(proxy.address, true);
+            await proxy.connect(owner).makeItem(jupApes.address, 1, price);
+
+            const item = await proxy.items(1);
+            
+            expect(item.itemId).to.equal(1)
+            expect(item.nftAddress).to.equal(jupApes.address)
+            expect(item.tokenId).to.equal(1)
+            expect(item.price).to.equal(price)
+            expect(item.seller).to.equal(owner.address);
+            expect(item.creator).to.equal(owner.address);
+            const royalties = (price * creatorFeePercentage)/toPercentage;
+            expect(item.creatorRoyalties).to.equal(royalties);
+            expect(item.status).to.equal(Listed);
+        });
+
+        it("should be able to buy Jup Apes!", async () => {
+            const {ledaNft, owner, proxy, minterOne, minterTwo, buyerOne} = await loadFixture(marketplaceFixture);
+
+            const JupApes = await ethers.getContractFactory("JupApesNFT");
+            const jupApes = await JupApes.deploy("JupApes NFT Collection", "JUPS");
+            await jupApes.deployed();
+
+            const stakingRewardsPercentage = 50;
+            const tokenId = 1;
+            await jupApes.connect(owner).mint(
+                owner.address,
+                URI, 
+                creatorFeePercentage, 
+                stakingRewardsPercentage,
+                tokenId
+            );
+
+            await jupApes.connect(owner).setApprovalForAll(proxy.address, true);
+            await proxy.connect(owner).makeItem(jupApes.address, 1, price);
+
+            const item = await proxy.items(1);
+            
+            await proxy.connect(buyerOne).buyItem(1, {value: price});
+            
+            expect(await proxy.getItemsSold()).to.equal(1);
+            expect(await proxy.getItemsCount()).to.equal(1);
+        });
+
+        it("should be able to send the right amount to the seller!", async () => {
+            const {ledaNft, owner, proxy, minterOne, minterTwo, buyerOne} = await loadFixture(marketplaceFixture);
+
+            const JupApes = await ethers.getContractFactory("JupApesNFT");
+            const jupApes = await JupApes.deploy("JupApes NFT Collection", "JUPS");
+            await jupApes.deployed();
+
+            const stakingRewardsPercentage = 50;
+            const tokenId = 1;
+            await jupApes.connect(owner).mint(
+                owner.address,
+                URI, 
+                creatorFeePercentage, 
+                stakingRewardsPercentage,
+                tokenId
+            );
+
+            await jupApes.connect(owner).setApprovalForAll(proxy.address, true);
+            await proxy.connect(owner).makeItem(jupApes.address, 1, price);
+
+            const marketplaceFee = (price * marketplaceFeePercent)/toPercentage;
+            const revenue = price - marketplaceFee;
+            await expect(await proxy.connect(buyerOne).buyItem(1, {value: price}))
+            .to.changeEtherBalance(owner.address, revenue);
+        });
+
+        it("should be able to send royalties if the NFT is sold again!", async () => {
+            const {ledaNft, owner, proxy, minterOne, minterTwo, buyerOne, buyerTwo} = await loadFixture(marketplaceFixture);
+
+            const JupApes = await ethers.getContractFactory("JupApesNFT");
+            const jupApes = await JupApes.deploy("JupApes NFT Collection", "JUPS");
+            await jupApes.deployed();
+
+            const stakingRewardsPercentage = 50;
+            const tokenId = 1;
+            await jupApes.connect(owner).mint(
+                owner.address,
+                URI, 
+                creatorFeePercentage, 
+                stakingRewardsPercentage,
+                tokenId
+            );
+
+            await jupApes.connect(owner).setApprovalForAll(proxy.address, true);
+            await proxy.connect(owner).makeItem(jupApes.address, 1, price);
+
+            await proxy.connect(buyerOne).buyItem(1, {value: price});
+
+            await jupApes.connect(buyerOne).setApprovalForAll(proxy.address, true);
+
+            // create new item:2
+            await proxy.connect(buyerOne).makeItem(jupApes.address, 1, price)
+
+            const royalty = (price * creatorFeePercentage)/toPercentage;
+            await expect(await proxy.connect(buyerTwo).buyItem(2, {value: price}))
+            .to.changeEtherBalance(owner.address, royalty);
+        });
+
+        it("should be able to send royalties to a different receiver account!", async () => {
+            const {ledaNft, owner, proxy, minterOne, minterTwo, buyerOne, buyerTwo} = await loadFixture(marketplaceFixture);
+
+            const JupApes = await ethers.getContractFactory("JupApesNFT");
+            const jupApes = await JupApes.deploy("JupApes NFT Collection", "JUPS");
+            await jupApes.deployed();
+
+            const stakingRewardsPercentage = 50;
+            const tokenId = 1;
+            await jupApes.connect(owner).mint(
+                minterOne.address,
+                URI, 
+                creatorFeePercentage, 
+                stakingRewardsPercentage,
+                tokenId
+            );
+
+            await jupApes.connect(minterOne).setApprovalForAll(proxy.address, true);
+            await proxy.connect(minterOne).makeItem(jupApes.address, 1, price);
+
+            const marketplaceFee = (price * marketplaceFeePercent)/toPercentage;
+            const revenue = price - marketplaceFee;
+            await expect(await proxy.connect(buyerOne).buyItem(1, {value: price}))
+            .to.changeEtherBalance(minterOne.address, revenue);
+
+            await jupApes.connect(buyerOne).setApprovalForAll(proxy.address, true);
+            // create new item:2
+            await proxy.connect(buyerOne).makeItem(jupApes.address, 1, price)
+
+            const royalty = (price * creatorFeePercentage)/toPercentage;
+            await expect(await proxy.connect(buyerTwo).buyItem(2, {value: price}))
+            .to.changeEtherBalance(minterOne.address, royalty);
+        });
     });
     
     describe("Should fail if requirements are not fullfilled", () => { 
@@ -514,7 +669,6 @@ describe("Marketplace Contract Testing", () => {
             await proxy.connect(minterOne).makeItem(ledaNftTest.address, 1, price);
 
             const item = await proxy.items(1);
-            //const [_receiver, _royaltyAmount] = await ledaNftTest.royaltyInfo(item.itemId, price);
             
             expect(item.itemId).to.equal(1)
             expect(item.nftAddress).to.equal(ledaNftTest.address)

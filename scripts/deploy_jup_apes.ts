@@ -1,4 +1,5 @@
 import { ethers } from "hardhat";
+const fs = require('fs');
 
 async function main() {
   const [deployer] = await ethers.getSigners();
@@ -10,11 +11,11 @@ async function main() {
   const JupApesNFT = await ethers.getContractFactory("JupApesNFT");
   
   // deploy contracts
-  const apesNft = await JupApesNFT.deploy("Jupe Apes", "APES");
+  const jupApesNft = await JupApesNFT.deploy("Jupe Apes", "APES");
+  console.log(jupApesNft.address, " Apes NFTs contract address");
   
-  console.log(apesNft.address, " Apes NFTs contract address");
   // Save copies of each contracts abi and address to the frontend.
-  saveFrontendFiles(apesNft , "JupApesNFT");
+  saveFrontendFiles(jupApesNft , "JupApesNFT");
 }
 
 function saveFrontendFiles(contract:any, name:string) {
@@ -22,7 +23,6 @@ function saveFrontendFiles(contract:any, name:string) {
   const hre = require('hardhat');
 
   const contractsDir = __dirname + "/../data";
-  //const contractsDir = "/Users/gimer/Desktop/Stackit/Projects/NFTs/leda-web/src/contracts";
 
   if (!fs.existsSync(contractsDir)) {
     fs.mkdirSync(contractsDir);

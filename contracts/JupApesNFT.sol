@@ -2,7 +2,6 @@
 pragma solidity 0.8.16;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
@@ -17,7 +16,6 @@ contract JupApesNFT is
         ERC721,
         ERC2981,
         EIP712,
-        AccessControl,
         ReentrancyGuard,
         ERC721URIStorage,
         ERC721Burnable,
@@ -29,14 +27,13 @@ contract JupApesNFT is
     mapping(uint => uint) public stakingRewardsPercentage;
     
     // This means that the maximun amount is 10%
-    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
-
     uint public constant MAX_ROYALTIES_PERCENTAGE = 100;
     uint public constant CAP_VALUE = 10000;
     uint public tokenCount;
 
     event LogNFTMinted(
         uint _nftId,
+        address _sender,
         address _owner,
         string _nftURI,
         uint _royaltiesPercentage,
@@ -62,9 +59,7 @@ contract JupApesNFT is
             string memory _symbolNFT
         )
         ERC721(_nameNFT, _symbolNFT)
-        {
-            _setupRole(MINTER_ROLE, msg.sender);
-        }
+        {}
 
     function pause() external onlyOwner {
         _pause();
@@ -103,14 +98,15 @@ contract JupApesNFT is
         stakingRewardsPercentage[_tokenId] = _stakingRewardsPercentage;
 
         emit LogNFTMinted(
-                _tokenId, 
-                msg.sender, 
-                _tokenURI, 
-                _royaltiesPercentage, 
+                _tokenId,
+                msg.sender,
+                _to,
+                _tokenURI,
+                _royaltiesPercentage,
                 _stakingRewardsPercentage
         );
         tokenCount++;
-        _setTokenRoyalty(_tokenId, msg.sender, _royaltiesPercentage);
+        _setTokenRoyalty(_tokenId, _to, _royaltiesPercentage);
         _safeMint(_to, _tokenId);
         _setTokenURI(_tokenId, _tokenURI);
                
@@ -128,7 +124,7 @@ contract JupApesNFT is
         address signer = _verify(voucher);
 
         require(
-            hasRole(MINTER_ROLE, signer), 
+            signer == owner(), 
             "Signature invalid or unauthorized"
         );
 
@@ -168,10 +164,10 @@ contract JupApesNFT is
     function supportsInterface(bytes4 interfaceId)
         public
         view
-        override(ERC721, ERC2981, AccessControl)
+        override(ERC721, ERC2981)
         returns (bool)
     {
-        return super.supportsInterface(interfaceId) || AccessControl.supportsInterface(interfaceId);
+        return super.supportsInterface(interfaceId);
     }
 
     function getContractBalance()
@@ -181,7 +177,6 @@ contract JupApesNFT is
     {
         return address(this).balance;
     }
-
 
     function withdraw() 
         external
