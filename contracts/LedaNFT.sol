@@ -139,10 +139,10 @@ contract LedaNFT is
             redeemer != address(0), 
             "Redeemer is the zero address!"
         );
-
+        
         require(
-            voucher.royalties <= lazyMintingFee,
-            "Royalties exceed the max royalty lazy fees percentage"
+            voucher.royalties <= maxCreatorRoyalties,
+            "Royalties exceed the max creator royalties percentage"
         );
 
         require(
