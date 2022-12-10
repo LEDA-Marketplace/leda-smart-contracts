@@ -124,22 +124,29 @@ describe("LedaNFT Contract Testing", () => {
                 .to.be.revertedWith('Creator is the zero address!');
         });
 
-        it("Should fail if royalties are greater than the max fee percentage", async () => {
+        //TODO: verify this
+        it("Should fail if royalties are greater than the max creator fee percentage", async () => {
             const { ledaNft, redeemerContract, buyer, minter} = await loadFixture(deploy);
 
             const lazyMinter = new LazyLedaMinter(ledaNft, minter);
             const minPrice = 0;
-            const royalties = 51;
+            const royalties = 101;
             const voucher = 
                 await lazyMinter.createVoucher(
                     ipfs,
                     minPrice,
-                    zeroAddress,
+                    minter.address,
                     royalties
                 );
 
             await expect(redeemerContract.redeem(buyer.address, voucher))
-                .to.be.revertedWith('Royalties exceed the max royalty lazy fees percentage');
+                .to.be.revertedWith('Royalties exceed the max creator royalties percentage');
+
+            await ledaNft.setMaxCreatorRoyalties(royalties);
+
+            await redeemerContract.redeem(buyer.address, voucher);
+            const nftOwner = await redeemerContract.ownerOf(1);
+            expect(nftOwner).to.equal(buyer.address);
         });
 
         it("Should fail to redeem a voucher if buyer address is equal to zero", async () => {
@@ -262,13 +269,14 @@ describe("LedaNFT Contract Testing", () => {
             await expect(redeemerContract.redeem(buyer.address, voucher, { value: payment }))
             .to.be.revertedWith('Insufficient funds to redeem')
         });
-
+        
+        // TODO: This test is wrong!
         it("Should be possible to increase the lazy minting royalty fees percentage", async () => {
             const { ledaNft, redeemerContract, buyer, minter} = await loadFixture(deploy);
 
             const lazyMinter = new LazyLedaMinter(ledaNft, minter);
-            const minPrice = 0;
-            const royalties = 51;
+            const minPrice = ethers.constants.WeiPerEther // charge 1 Eth
+            const royalties = 50;
             const voucher = 
                 await lazyMinter.createVoucher(
                     ipfs,
@@ -277,17 +285,23 @@ describe("LedaNFT Contract Testing", () => {
                     royalties
                 );
 
-            await expect(ledaNft.setLazyMintingFee(royalties))
+            // New percentage is equal to 10%
+            const newLazyMintingFeePercentage = 100;
+            await expect(ledaNft.setLazyMintingFee(newLazyMintingFeePercentage))
             .to.emit(ledaNft, "LogSetLazyMintingFee")
             .withArgs(
-                royalties
+                newLazyMintingFeePercentage
             );
 
-            await expect(redeemerContract.redeem(buyer.address, voucher, { value: minPrice }))
-                .to.emit(ledaNft, 'Transfer')  // transfer from null address to minter
-                .withArgs(zeroAddress, minter.address, 1)
-                .and.to.emit(ledaNft, 'Transfer') // transfer from minter to redeemer
-                .withArgs(minter.address, buyer.address, 1);
+            const lazyMintingFee = await ledaNft.lazyMintingFee();
+            const profits = minPrice.sub(minPrice.mul(lazyMintingFee).div(feeDenominator));
+            const contractBalance = minPrice.sub(profits);
+
+            await expect(await redeemerContract.redeem(buyer.address, voucher, { value: minPrice }))
+            .to.changeEtherBalances([ledaNft, buyer, minter], [contractBalance, minPrice.mul(-1), profits]);
+
+            await expect(await ledaNft.withdraw())
+            .to.changeEtherBalance(minter, contractBalance);
 
             const nftOwner = await redeemerContract.ownerOf(1);
             expect(nftOwner).to.equal(buyer.address);

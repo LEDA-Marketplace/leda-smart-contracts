@@ -90,6 +90,18 @@ describe("LedaNFT Contract Testing", () => {
             expect(_creator).to.equal(minterOne.address);
         });
 
+        it("should fail if the royalties are greater than the maximum creators royalties", async () => {
+            const {ledaNft, minterOne, minterTwo} = await loadFixture(ledaNftFixture);
+
+            const creatorRoyalties = 101;
+
+            await expect(ledaNft.connect(minterOne).mint(URI, creatorRoyalties))
+            .to.be.revertedWith("Royalties percentage exceeds the maximum value!");
+
+            expect(await ledaNft.tokenCount()).to.equal(0);
+            expect(await ledaNft.balanceOf(minterOne.address)).to.equal(0);
+        });
+
         it("should be able to set the maximum royalties amount value", async () => {
             const {ledaNft, minterOne, minterTwo} = await loadFixture(ledaNftFixture);
 
