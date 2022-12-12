@@ -160,10 +160,13 @@ contract Marketplace is
         uint itemId = itemsCount.current();
         
         address _creator;
+
         uint _creatorRoyalties = 0;
 
-        if(checkRoyalties(_nft))
+        if(checkRoyalties(_nft)){
             (_creator, _creatorRoyalties) = IERC2981Upgradeable(_nft).royaltyInfo(_tokenId, _price);
+            require(_creator != address(0), "Creator is zero address!");
+        }
         else
             _creator = msg.sender;
         
@@ -267,7 +270,17 @@ contract Marketplace is
         require(msg.value >= item.price, "not enough ether to cover item price and market fee");
         require(item.status == item_status.Listed, "item should be listed");
 
-        uint profits = getProfits(_itemId, item.creatorRoyalties);
+        uint _creatorRoyalties = 0;
+        // transfer nft to buyer
+        address nft = item.nftAddress;
+
+        if(checkRoyalties(nft))
+            (, _creatorRoyalties) = IERC2981Upgradeable(nft).royaltyInfo(item.tokenId, msg.value);
+        
+        item.creatorRoyalties = _creatorRoyalties;
+        
+        uint profits = getProfits(msg.value, item.creatorRoyalties);
+        
         // pay seller and feeAccount
         (item.creator).transfer(item.creatorRoyalties);
         (item.seller).transfer(profits);
@@ -287,9 +300,7 @@ contract Marketplace is
             item.seller,
             msg.sender
         );
-        // transfer nft to buyer
-        address nft = item.nftAddress;
-
+        
         IERC721Upgradeable(nft).safeTransferFrom(address(this), msg.sender, item.tokenId);
     }
 
@@ -309,13 +320,12 @@ contract Marketplace is
         return itemsCount.current();
     }
 
-    function getProfits(uint _itemId, uint _creatorRoyalties)
+    function getProfits(uint _price, uint _creatorRoyalties)
         internal
         view 
         returns(uint _sellerAmount)
     {
         uint _platformFees;
-        uint _price = items[_itemId].price;
         
         _platformFees = (_price * feePercentage) / TO_PERCENTAGE;
         _sellerAmount = _price - (_platformFees + _creatorRoyalties);

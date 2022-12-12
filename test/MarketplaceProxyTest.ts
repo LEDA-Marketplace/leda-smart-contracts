@@ -326,7 +326,74 @@ describe("Marketplace Contract Testing", () => {
                     .add(_sellerAmount)
                     .add(_creatorAmount)
             );
+        });
 
+        it("should consider to change the price to zero", async () => {
+            const {ledaNft, proxy, minterOne, buyerOne} = await loadFixture(mintNFTs);
+            const newPrice = 0;
+
+            await proxy.connect(minterOne).makeItem(ledaNft.address, 1, price);
+            
+            await proxy.connect(minterOne).changeItemStatus(1, Not_Listed);
+
+            await proxy.connect(minterOne).getListedAgain(1, newPrice);
+
+            const item = await proxy.items(1);
+            expect(item.status).to.equal(Listed);
+            expect(item.price).to.equal(newPrice);
+
+            const _creatorAmount = (newPrice * creatorFeePercentage)/toPercentage;
+            const _platformFees = (newPrice * marketplaceFeePercent)/toPercentage;
+            const _sellerAmount = newPrice - _platformFees - _creatorAmount;
+
+            await expect(await proxy.connect(buyerOne).buyItem(1, {value: newPrice}))
+            .to.changeEtherBalances(
+                    [proxy, buyerOne, minterOne], 
+                    [_platformFees, -1 * newPrice, _creatorAmount + _sellerAmount]);
+        });
+
+        it("should be able to give the royalties after changing the price", async () => {
+            const {ledaNft, proxy, minterOne, buyerOne} = await loadFixture(mintNFTs);
+            const newPrice = 2 * price;
+
+            await proxy.connect(minterOne).makeItem(ledaNft.address, 1, price);
+            
+            await proxy.connect(minterOne).changeItemStatus(1, Not_Listed);
+
+            await proxy.connect(minterOne).getListedAgain(1, newPrice);
+
+            const item = await proxy.items(1);
+            expect(item.status).to.equal(Listed);
+            expect(item.price).to.equal(newPrice);
+
+            const _creatorAmount = (newPrice * creatorFeePercentage)/toPercentage;
+            const _platformFees = (newPrice * marketplaceFeePercent)/toPercentage;
+            const _sellerAmount = newPrice - _platformFees - _creatorAmount;
+
+            await expect(await proxy.connect(buyerOne).buyItem(1, {value: newPrice}))
+            .to.changeEtherBalances(
+                    [proxy, buyerOne, minterOne], 
+                    [_platformFees, -1 * newPrice, _creatorAmount + _sellerAmount]);
+        });
+
+        it("should consider to receive an amount greater than price", async () => {
+            const {ledaNft, proxy, minterOne, buyerOne} = await loadFixture(mintNFTs);
+            const amount = 3 * price;
+
+            await proxy.connect(minterOne).makeItem(ledaNft.address, 1, price);
+            
+            const item = await proxy.items(1);
+            expect(item.status).to.equal(Listed);
+            expect(item.price).to.equal(price);
+
+            const _creatorAmount = (amount * creatorFeePercentage)/toPercentage;
+            const _platformFees = (amount * marketplaceFeePercent)/toPercentage;
+            const _sellerAmount = amount - _platformFees - _creatorAmount;
+
+            await expect(await proxy.connect(buyerOne).buyItem(1, {value: amount}))
+            .to.changeEtherBalances(
+                    [proxy, buyerOne, minterOne], 
+                    [_platformFees, -1 * amount, _creatorAmount + _sellerAmount]);
         });
         
         it("should give the royalties after reselling the item", async () => {
