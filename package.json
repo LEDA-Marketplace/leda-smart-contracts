@@ -9,7 +9,7 @@
     "deploy:testnet": "hardhat run scripts/deploy.ts --network goerli",
     "deployProxy:localhost": "hardhat run scripts/deploy_proxy.ts --network localhost",
     "deployProxy:testnet": "hardhat run scripts/deploy_proxy.ts --network goerli",
-    "test:proxy": "hardhat test test/MarketplaceProxyTest.ts --network localhost",
+    "test:proxy": "hardhat test test/MarketplaceProxyTest.ts",
     "test:LedaNft": "hardhat test test/LedaNftTest.ts",
     "test:JupApes": "hardhat test test/JupApesTest.ts",
     "test:LazyLeda": "hardhat test test/LazyLedaTest.ts",
