@@ -12,13 +12,13 @@ async function main() {
   let obj = JSON.parse(json);
 
   const JupApesNFT = await ethers.getContractFactory("JupApesNFT");
-  const jupApesNFT = await JupApesNFT.attach("0x1a1a853b8bc033391ba392387F99E40A29EF279D");
+  const jupApesNFT = await JupApesNFT.attach("0xd76b2f2ca06F7F24BAdB5250B73fCe33a0a25C99");
   const owner = "0x9b7920fB94533b0BFbf12914c09b8B22230b6041";
   const royalties = 50;
   const rewards: number[] = [120, 125, 140, 130, 110, 140, 105, 140, 115, 110];
   const totalApes = 5;
   
-  for (let i = 0; i < totalApes; i++) {
+  for (let i = 4; i < totalApes; i++) {
     console.log("cid: ", obj.table[i].cid);
     let tx1 = await jupApesNFT.mint(
                         owner,
@@ -27,7 +27,7 @@ async function main() {
                         rewards[i],
                         i+1,
                         { gasPrice: 250000000000,
-                          gasLimit: 21000}
+                          gasLimit: 2100000}
               );
     await tx1.wait();
   }

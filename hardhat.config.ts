@@ -6,7 +6,7 @@ import "@nomiclabs/hardhat-ethers";
 
 require("dotenv").config();
 
-const { GOERLI_URL, PRIVATE_KEY, MAINNET_URL } = process.env;
+const { GOERLI_URL, PRIVATE_KEY } = process.env;
 
 const PRIVATE = PRIVATE_KEY;
 const config: HardhatUserConfig = {
@@ -19,16 +19,16 @@ const config: HardhatUserConfig = {
     goerli: {
       url: GOERLI_URL || "",
       accounts: PRIVATE_KEY !== undefined ? [PRIVATE_KEY] : [],
-      gasPrice: 150000000000,
-      gas: 21000
+      gasPrice: 600000000000,
+      gas: 500000000000
     },
-    mainnet: {
+   /* mainnet: {
       url: MAINNET_URL || "",
       accounts: PRIVATE_KEY !== undefined ? [PRIVATE_KEY] : [],
-      gasPrice: 150000000000,
-      gas: 21000
+      gasPrice: 21000,
+      gas: 50000000000000
       
-    },
+    },*/
   },
   etherscan: {
     apiKey: {
