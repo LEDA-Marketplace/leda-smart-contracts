@@ -4,11 +4,6 @@ import { upgrades } from "hardhat"
 
 async function main() {
 
-    // Goerli Testnet
-    // LedaNFT: 0x72b5d93E1007666C889aF489f9Ea1788d5ACCAfb
-    // Marketplace: 0xaFa91a3a0bB0286a7D480c7Df99E3D1897621d5E
-    // Implementation: 0x5DbcD023AA6A4fBD6501eB67bd02e621E22f1184
-
     const [owner] = await ethers.getSigners();
     console.log("\n");
     console.log("Deploying Box...");
@@ -33,8 +28,7 @@ async function main() {
             kind: 'uups'
           });
     const implementationAddress = await upgrades.erc1967.getImplementationAddress(proxy.address);
-    // Get the ContractFactories and Signers here.
-  
+    
     // Save copies of each contracts abi and address to the frontend.
     saveFrontendFiles(ledaNft , "LedaNFT");
     saveFrontendFiles(proxy , "Marketplace");
@@ -51,8 +45,7 @@ function saveFrontendFiles(contract:any, name:string) {
   const hre = require('hardhat');
 
   const contractsDir = __dirname + "/../data";
-  //const contractsDir = "/Users/gimer/Desktop/Stackit/Projects/NFTs/leda-web/src/contracts";
-
+  
   if (!fs.existsSync(contractsDir)) {
     fs.mkdirSync(contractsDir);
   }
@@ -75,8 +68,7 @@ function saveImplementationAddress(implementation:any, name:string) {
   const hre = require('hardhat');
 
   const contractsDir = __dirname + "/../data";
-  //const contractsDir = "/Users/gimer/Desktop/Stackit/Projects/NFTs/leda-web/src/contracts";
-
+  
   if (!fs.existsSync(contractsDir)) {
     fs.mkdirSync(contractsDir);
   }

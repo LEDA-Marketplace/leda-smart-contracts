@@ -15,7 +15,8 @@
     "test:LazyLeda": "hardhat test test/LazyLedaTest.ts",
     "test:upgrade": "hardhat test test/MarketplaceUpgradeTest.ts --network localhost",
     "test": "hardhat test",
-    "upload:goerli":"npx hardhat run scripts/upload_jup_apes.ts --network goerli"
+    "upload:goerli":"npx hardhat run scripts/upload_jup_apes.ts --network goerli",
+    "test:LazyVoucher":"yarn test test/LazyJupsVoucher.ts --network localhost"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-chai-matchers": "^1.0.5",

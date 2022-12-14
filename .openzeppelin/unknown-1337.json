@@ -70,12 +70,27 @@
       "address": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
       "txHash": "0x73700e4daf92d4d1436045d7eb41bdc65cca1b78cf3924c7b9035f970dfe7d00",
       "kind": "uups"
+    },
+    {
+      "address": "0xc5a5C42992dECbae36851359345FE25997F5C42d",
+      "txHash": "0x24ea84e541a28dbcd6e212ce7c4c3d93869a5c3ec72b246b26c80bae00dd6aeb",
+      "kind": "uups"
+    },
+    {
+      "address": "0xc3e53F4d16Ae77Db1c982e75a937B9f60FE63690",
+      "txHash": "0x900b624850ce6d48bcac9f945c3e285cb8cc58d7098d08060eff24ca29a3bccd",
+      "kind": "uups"
+    },
+    {
+      "address": "0x851356ae760d987E095750cCeb3bC6014560891C",
+      "txHash": "0x14c04289f6f598b9d5a99245333f1e3370e582349ad78527b87a00d5f86b352b",
+      "kind": "uups"
     }
   ],
   "impls": {
     "6771e89c2596e43293c3d1c038bb9aaf425d0f1892a39157e18feb717a146707": {
-      "address": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
-      "txHash": "0x8a658e60674b15f476602174dbbfd3ea94aa06e961794bebad989ed56dd95c36",
+      "address": "0x09635F643e140090A9A8Dcd712eD6285858ceBef",
+      "txHash": "0x66e1c71e9c8187c09fed55b8d239028ab0e831287b27333e43b6b89fe61a9bc1",
       "layout": {
         "solcVersion": "0.8.16",
         "storage": [
@@ -329,8 +344,8 @@
       }
     },
     "d48e35b74434d5c666bfa49d329879e3c72c552c9f681a5d8eb3b47c8eed007e": {
-      "address": "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
-      "txHash": "0xfc318077171c0acb6b0b5a169246470f029d9a7faa4fd3135ab862c581085555",
+      "address": "0x9E545E3C0baAB3E08CdfD552C960A1050f373042",
+      "txHash": "0x0e949d09674edbc786de6ee04ff3661181cb94f966dfadcbe3c1de1f4f1a926a",
       "layout": {
         "solcVersion": "0.8.16",
         "storage": [
@@ -467,7 +482,7 @@
             "label": "items",
             "offset": 0,
             "slot": "355",
-            "type": "t_mapping(t_uint256,t_struct(Item)1693_storage)",
+            "type": "t_mapping(t_uint256,t_struct(Item)5994_storage)",
             "contract": "Marketplace",
             "src": "contracts/Marketplace.sol:55"
           }
@@ -493,7 +508,7 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_enum(item_status)1675": {
+          "t_enum(item_status)5976": {
             "label": "enum Marketplace.item_status",
             "members": [
               "Not_Listed",
@@ -502,7 +517,7 @@
             ],
             "numberOfBytes": "1"
           },
-          "t_mapping(t_uint256,t_struct(Item)1693_storage)": {
+          "t_mapping(t_uint256,t_struct(Item)5994_storage)": {
             "label": "mapping(uint256 => struct Marketplace.Item)",
             "numberOfBytes": "32"
           },
@@ -518,7 +533,7 @@
             ],
             "numberOfBytes": "32"
           },
-          "t_struct(Item)1693_storage": {
+          "t_struct(Item)5994_storage": {
             "label": "struct Marketplace.Item",
             "members": [
               {
@@ -565,7 +580,7 @@
               },
               {
                 "label": "status",
-                "type": "t_enum(item_status)1675",
+                "type": "t_enum(item_status)5976",
                 "offset": 0,
                 "slot": "7"
               }
