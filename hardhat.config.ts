@@ -19,8 +19,8 @@ const config: HardhatUserConfig = {
     goerli: {
       url: GOERLI_URL || "",
       accounts: PRIVATE_KEY !== undefined ? [PRIVATE_KEY] : [],
-      gasPrice: 600000000000,
-      gas: 500000000000
+      gasPrice: 6000000000,
+      gas: 2100000
     },
    /* mainnet: {
       url: MAINNET_URL || "",
