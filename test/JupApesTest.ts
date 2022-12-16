@@ -200,6 +200,24 @@ describe("JupApes Contract Testing", () => {
             expect(_royalties).to.equal(royalties);
         });
 
+        it("should allow royalties up to 100%", async () => {
+            const { jupApes, redeemerContract, buyer, minter} = await loadFixture(deploy);
+
+            const _to = minter.address;
+            const _tokenId = 1;
+
+            const creatorRoyalties = 1001;
+
+            await expect(jupApes.mint(
+                        _to,
+                        ipfs,
+                        creatorRoyalties,
+                        _stakingRewardsPercentage,
+                        _tokenId
+                        ))
+            .to.be.revertedWith("Royalties percentage should be equal or less than 100%");
+        });
+
         it("should transfer an nft using transferFrom directly", async () => {
             const { jupApes, redeemerContract, buyer, minter} = await loadFixture(deploy);
 

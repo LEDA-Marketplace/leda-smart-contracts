@@ -27,7 +27,7 @@ contract JupApesNFT is
     mapping(uint => uint) public stakingRewardsPercentage;
     
     // This means that the maximun amount is 10%
-    uint public constant MAX_ROYALTIES_PERCENTAGE = 100;
+    uint public constant MAX_ROYALTIES_PERCENTAGE = 1000;
     uint public constant CAP_VALUE = 10000;
     uint public tokenCount;
 
@@ -43,7 +43,7 @@ contract JupApesNFT is
     modifier onlyValidRoyalty(uint _royaltyPercentage) {
         require(
             _royaltyPercentage <= MAX_ROYALTIES_PERCENTAGE, 
-            "Royalties percentage should be equal or lesss than 10%"
+            "Royalties percentage should be equal or less than 100%"
         );
         _;
     }
